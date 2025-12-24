@@ -1,0 +1,46 @@
+/* Mobile-first global styles */
+
+:root {
+	--sp-bg: #f8f9fa;
+	--sp-primary: #0d6efd; /* Bootstrap primary */
+	--sp-radius: 10px;
+	--sp-max-sm: 420px;
+	--sp-max-md: 800px;
+}
+
+html, body {
+	height: 100%;
+	font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+	background-color: var(--sp-bg);
+	-webkit-font-smoothing: antialiased;
+}
+
+/* Utility max-width containers for centered forms/cards */
+.max-w-sm { max-width: var(--sp-max-sm); width: 100%; }
+.max-w-md { max-width: 680px; width: 100%; }
+.max-w-lg { max-width: var(--sp-max-md); width: 100%; }
+
+/* Better touch targets on mobile */
+button, .btn { min-height: 44px; padding-top: .5rem; padding-bottom: .5rem; }
+input, textarea, .form-control, .form-select { min-height: 44px; }
+
+/* Image helper */
+.object-fit-cover { object-fit: cover; width: 100%; height: 100%; }
+.img-preview img { max-height: 160px; width: auto; max-width: 100%; }
+
+/* Lessen heavy shadows on mobile for performance */
+.card.shadow-sm { box-shadow: 0 1px 6px rgba(0,0,0,0.06) !important; }
+
+/* Table truncation for desktop, but cards for mobile handled in templates */
+.text-truncate-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Make ratio helper consistent */
+.ratio-4x3 { position: relative; padding-bottom: 75%; }
+.ratio-4x3 > img { position: absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; }
+
+/* Small-screen specific tweaks */
+@media (max-width: 575.98px) {
+	.navbar-brand { font-size: 1rem; }
+	.card { border-radius: 8px; }
+}
+

@@ -1,0 +1,13 @@
+:host { display:block; }
+
+.card { border-radius: 12px; }
+
+.img-preview { overflow:hidden; border-radius:8px; }
+.img-preview img { width:100%; height:auto; max-height:180px; object-fit:cover; }
+
+.card-footer { font-size: .85rem; }
+
+@media (min-width: 768px) {
+	.img-preview img { max-height:240px; }
+}
+

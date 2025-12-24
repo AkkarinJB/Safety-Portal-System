@@ -1,0 +1,69 @@
+<div class="container mt-4 px-3" *ngIf="report">
+  <div class="mx-auto max-w-lg">
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-warning text-dark py-3">
+      <h4 class="mb-0"><i class="bi bi-tools me-2"></i>อัปเดตสถานะงานซ่อม #{{ report.id }}</h4>
+    </div>
+    <div class="card-body p-3">
+      
+      <div class="alert alert-secondary mb-4">
+        <h5 class="alert-heading fw-bold">{{ report.area }}</h5>
+        <p class="mb-0">{{ report.detail }}</p>
+        <hr>
+        <p class="mb-0 small">
+          <span class="badge bg-dark me-2">{{ report.category }}</span>
+          Rank: <strong>{{ report.rank }}</strong> | 
+          ผู้รับผิดชอบ: <strong>{{ report.responsiblePerson }}</strong>
+        </p>
+      </div>
+
+      <div class="row">
+        <div class="col-12 col-md-6 mb-3">
+          <label class="form-label fw-bold text-muted">รูปก่อนทำ (Before)</label>
+          <div class="bg-light rounded overflow-hidden">
+             <div class="ratio ratio-4x3">
+               <img *ngIf="report.imageBeforeUrl" [src]="getImageUrl(report.imageBeforeUrl)" class="object-fit-cover rounded" alt="before">
+               <div *ngIf="!report.imageBeforeUrl" class="d-flex align-items-center justify-content-center text-muted h-100">ไม่มีรูปภาพ</div>
+             </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-6 mb-3">
+          <label class="form-label fw-bold text-success">รูปหลังทำเสร็จ (After Upload)</label>
+          <input type="file" class="form-control mb-2" (change)="onFileSelected($event)" accept="image/*">
+
+          <div *ngIf="imageAfterPreview" class="border-success rounded overflow-hidden img-preview">
+            <img [src]="imageAfterPreview" class="object-fit-cover rounded" alt="after new">
+            <div class="text-center small text-success py-1">รูปใหม่ที่จะบันทึก</div>
+          </div>
+
+          <div *ngIf="!imageAfterPreview && report.imageAfterUrl" class="border-0 opacity-75 rounded overflow-hidden mt-2 img-preview">
+            <img [src]="getImageUrl(report.imageAfterUrl)" class="object-fit-cover rounded" alt="after current">
+            <div class="text-center small py-1">รูปปัจจุบัน</div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-6">
+          <label class="form-label fw-bold">สถานะงาน</label>
+          <select class="form-select form-select-lg" [(ngModel)]="status">
+            <option [value]="0">Not Yet Done (ยังไม่ทำ)</option>
+            <option [value]="1">On Process (กำลังดำเนินการ)</option>
+            <option [value]="2">Done (เสร็จแล้ว)</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-6 text-md-end">
+            <a routerLink="/dashboard" class="btn btn-secondary w-100 w-md-auto mb-2 mb-md-0 me-md-2">ยกเลิก</a>
+            <button (click)="onSubmit()" class="btn btn-success btn-lg w-100 w-md-auto">
+              <i class="bi bi-check-circle me-2"></i> บันทึกผล
+            </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  </div>
+</div>

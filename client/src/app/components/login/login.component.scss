@@ -1,0 +1,62 @@
+:host {
+	display: block;
+}
+
+.card-body .display-1 {
+	font-size: 3rem;
+	color: var(--sp-primary);
+}
+
+.card { border-radius: 12px; }
+
+.form-floating > .form-control {
+  min-height: auto;
+  padding-top: 1.625rem;
+  padding-bottom: 0.625rem;
+}
+
+.form-floating > label {
+  padding: 0.625rem 0.75rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 !important;
+  border: 0;
+  background: transparent;
+  color: #6c757d;
+  cursor: pointer;
+  outline: none;
+  z-index: 10;
+  height: auto;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-height: auto;
+  margin-top: 0;
+}
+
+.password-toggle:hover {
+  color: var(--bs-primary) !important;
+}
+
+.password-toggle:focus {
+  box-shadow: none;
+}
+
+.password-toggle i {
+  font-size: 1.1rem;
+}
+
+.card-body { padding: 1rem; }
+
+@media (min-width: 576px) {
+	.card-body .display-1 { font-size: 4rem; }
+	.card-body { padding: 1.25rem; }
+}
+

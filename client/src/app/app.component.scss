@@ -1,0 +1,11 @@
+:host { display:block; }
+
+.navbar-brand .fs-6 { font-weight:700; }
+.nav-link i { font-size: 1.05rem; }
+.nav-link { padding: .4rem .6rem; }
+
+@media (max-width: 575.98px) {
+	.nav-link span { display:none; }
+	.nav-link { padding: .5rem; }
+}
+

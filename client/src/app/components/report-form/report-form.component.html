@@ -1,0 +1,79 @@
+<div class="container mt-4">
+  <div class="mx-auto max-w-lg">
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-primary text-white py-3">
+      <h4 class="mb-0"><i class="bi bi-file-earmark-plus me-2"></i>แจ้งปัญหาความปลอดภัย</h4>
+    </div>
+    <div class="card-body p-4">
+      
+      <form (ngSubmit)="onSubmit()">
+        
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">พื้นที่ที่พบ (Area) <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="formData.area" name="area" required placeholder="เช่น ไลน์ผลิต A, โรงอาหาร">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">รูปภาพ (Before)</label>
+            <input type="file" class="form-control" (change)="onFileSelected($event)" accept="image/*">
+            <div *ngIf="imagePreview" class="mt-2 text-center bg-light p-2 rounded img-preview">
+              <img [src]="imagePreview" class="img-fluid rounded">
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">รายละเอียดปัญหา <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <textarea class="form-control" rows="3" [(ngModel)]="formData.detail" name="detail" required placeholder="อธิบายสิ่งที่พบ..."></textarea>
+            <button type="button" class="btn btn-warning text-dark px-4" (click)="askAi()" [disabled]="isAnalyzing">
+              <span *ngIf="!isAnalyzing"><i class="bi bi-stars"></i>AI วิเคราะห์</span>
+              <span *ngIf="isAnalyzing"><span class="spinner-border spinner-border-sm"></span> กำลังประมวลผล...</span>
+            </button>
+          </div>
+          <small class="text-muted">* กดปุ่มสีเหลืองเพื่อให้ AI ช่วยประเมินความเสี่ยงและหมวดหมู่ให้</small>
+        </div>
+
+        <hr class="my-4 text-muted opacity-25">
+
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label class="form-label">หมวดหมู่ (Category)</label>
+            <select class="form-select" [(ngModel)]="formData.category" name="category">
+              <option value="">-- เลือก --</option>
+              <option value="เครื่องจักร">เครื่องจักร</option>
+              <option value="ไฟฟ้า">ไฟฟ้า</option>
+              <option value="ที่สูง">ที่สูง</option>
+              <option value="ยานพาหนะ">ยานพาหนะ</option>
+              <option value="ของหล่น">ของหล่น</option>
+              <option value="อื่นๆ">อื่นๆ</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">ระดับความเสี่ยง (Rank)</label>
+            <select class="form-select" [(ngModel)]="formData.rank" name="rank">
+              <option value="A">A (สูง - หยุดงานทันที)</option>
+              <option value="B">B (กลาง - แก้ไขใน 7 วัน)</option>
+              <option value="C">C (ต่ำ - เฝ้าระวัง)</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">ผู้รับผิดชอบ</label>
+            <input type="text" class="form-control" [(ngModel)]="formData.responsiblePerson" name="responsiblePerson" placeholder="ระบุชื่อ">
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label">ข้อเสนอแนะการแก้ไข (Suggestion)</label>
+          <textarea class="form-control bg-light" rows="2" [(ngModel)]="formData.suggestion" name="suggestion" readonly></textarea>
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <a routerLink="/dashboard" class="btn btn-secondary">ยกเลิก</a>
+          <button type="submit" class="btn btn-primary px-5"><i class="bi bi-save me-2"></i>บันทึกข้อมูล</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>

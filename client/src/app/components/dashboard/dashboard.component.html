@@ -1,0 +1,195 @@
+<div class="container-fluid px-4 mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold text-dark mb-0">
+        <i class="me-2 text-primary"></i>Dashboard
+      </h2>
+      <p class="text-muted mb-0">รายการแจ้งปัญหาความปลอดภัยทั้งหมด</p>
+    </div>
+    <a routerLink="/create" class="btn btn-primary btn-lg shadow-sm">
+      <i class="bi bi-plus-lg me-1"></i> แจ้งเรื่องใหม่
+    </a>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm border-start border-4 border-danger h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <span class="text-muted small text-uppercase fw-bold">ความเสี่ยงสูง (Rank A)</span>
+              <h3 class="mb-0 fw-bold text-danger">
+                {{ getRankCount('A') }}
+              </h3>
+            </div>
+            <div class="fs-1 text-danger opacity-25"><i class="bi bi-exclamation-triangle-fill"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm border-start border-4 border-warning h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <span class="text-muted small text-uppercase fw-bold">ปานกลาง (Rank B)</span>
+              <h3 class="mb-0 fw-bold text-warning text-dark">
+                {{ getRankCount('B') }}
+              </h3>
+            </div>
+            <div class="fs-1 text-warning opacity-25"><i class="bi bi-exclamation-circle-fill"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm border-start border-4 border-success h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <span class="text-muted small text-uppercase fw-bold">ทั่วไป (Rank C)</span>
+              <h3 class="mb-0 fw-bold text-success">
+                {{ getRankCount('C') }}
+              </h3>
+            </div>
+            <div class="fs-1 text-success opacity-25"><i class="bi bi-check-circle-fill"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
+    <div class="card-header bg-white py-3 border-bottom">
+      <h5 class="mb-0 fw-bold text-secondary"><i class="bi bi-table me-2"></i>รายการล่าสุด</h5>
+    </div>
+    <div class="d-block d-md-none">
+      <div class="list-group">
+        <div *ngFor="let item of reports" class="list-group-item border-0 p-3 mb-2 shadow-sm rounded">
+          <div class="d-flex align-items-start">
+            <div class="me-3" style="width:72px; flex: 0 0 72px;">
+              <div class="ratio ratio-4x3 rounded overflow-hidden bg-light">
+                <img *ngIf="item.imageBeforeUrl" [src]="getImageUrl(item.imageBeforeUrl)" alt="Before" class="object-fit-cover">
+                <div *ngIf="!item.imageBeforeUrl" class="d-flex align-items-center justify-content-center text-muted h-100">
+                  <i class="bi bi-image"></i>
+                </div>
+              </div>
+            </div>
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="fw-bold">{{ item.area }}</div>
+                  <small class="text-muted d-block text-truncate-ellipsis">{{ item.detail }}</small>
+                </div>
+                <div class="text-end">
+                  <span class="badge rounded-pill" [ngClass]="{
+                    'bg-danger': item.rank === 'A',
+                    'bg-warning text-dark': item.rank === 'B',
+                    'bg-success': item.rank === 'C'
+                  }">{{ item.rank }}</span>
+                </div>
+              </div>
+              <div class="mt-2 d-flex justify-content-between align-items-center">
+                <div class="small text-muted">{{ item.responsiblePerson || '-' }}</div>
+                <div>
+                  <a [routerLink]="['/edit', item.id]" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-pencil"></i></a>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteItem(item.id!)"><i class="bi bi-trash"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive d-none d-md-block">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="bg-light text-secondary small text-uppercase">
+          <tr>
+            <th class="ps-4" style="width: 5%;">ลำดับที่</th>
+            <th style="width: 15%;">รูปภาพ</th>
+            <th style="width: 25%;">รายละเอียด / พื้นที่</th>
+            <th style="width: 10%;">Category</th>
+            <th style="width: 10%;">Rank</th>
+            <th style="width: 15%;">ผู้รับผิดชอบ</th>
+            <th style="width: 10%;">สถานะ</th>
+            <th class="text-end pe-4" style="width: 10%;">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of reports">
+            <td class="ps-4 fw-bold text-muted">#{{ item.id }}</td>
+            <td>
+              <div class="ratio ratio-4x3 rounded overflow-hidden bg-light shadow-sm" style="width: 80px;">
+                <img *ngIf="item.imageBeforeUrl" [src]="getImageUrl(item.imageBeforeUrl)"
+                  class="object-fit-cover" alt="Before">
+                <div *ngIf="!item.imageBeforeUrl"
+                  class="d-flex align-items-center justify-content-center text-muted h-100">
+                  <i class="bi bi-image"></i>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="fw-bold text-dark">{{ item.area }}</div>
+              <small class="text-muted d-block text-truncate" style="max-width: 200px;">
+                {{ item.detail }}
+              </small>
+            </td>
+            <td>
+              <span class="badge bg-light text-dark border px-2 py-1 fw-normal">
+                {{ item.category || '-' }}
+              </span>
+            </td>
+            <td>
+              <span class="badge rounded-pill" [ngClass]="{
+                  'bg-danger': item.rank === 'A',
+                  'bg-warning text-dark': item.rank === 'B',
+                  'bg-success': item.rank === 'C'
+                }">
+                Rank {{ item.rank }}
+              </span>
+            </td>
+            <td>
+              <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                  style="width: 28px; height: 28px; font-size: 12px;">
+                  {{ item.responsiblePerson.charAt(0).toUpperCase() }}
+                </div>
+                <span class="small">{{ item.responsiblePerson }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="{
+                  'bg-secondary': item.status === 'NotYetDone',
+                  'bg-primary': item.status === 'OnProcess',
+                  'bg-success': item.status === 'Done'
+                }">
+                {{ item.status }}
+              </span>
+            </td>
+            <td class="text-end pe-4">
+              <a [routerLink]="['/edit', item.id]" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteItem(item.id!)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+
+          <tr *ngIf="reports.length === 0">
+            <td colspan="8" class="text-center py-5">
+              <div class="text-muted opacity-50 mb-2">
+                <i class="bi bi-clipboard-x display-4"></i>
+              </div>
+              <p class="text-muted mb-0">ยังไม่มีข้อมูลแจ้งซ่อม</p>
+              <a routerLink="/create" class="btn btn-link text-decoration-none">แจ้งเลย!</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

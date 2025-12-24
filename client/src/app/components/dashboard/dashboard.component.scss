@@ -1,0 +1,13 @@
+:host { display:block; }
+
+.list-group-item { border-radius: 10px; }
+.list-group-item .ratio { width:72px; }
+
+.table-responsive table img { max-width:80px; height:auto; object-fit:cover; }
+
+.badge { min-width:56px; }
+
+@media (max-width: 575.98px) {
+	.card-header h5 { font-size: 1rem; }
+}
+

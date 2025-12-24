@@ -1,0 +1,31 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm" *ngIf="!isLoginPage">
+  <div class="container-fluid px-3">
+    <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+      <i class="bi bi-shield-check me-2"></i>
+      <span class="fs-6">Safety Portal</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link active d-flex align-items-center" routerLink="/dashboard" aria-label="Dashboard">
+            <i class="bi bi-speedometer2 me-1"></i>
+            <span class="d-none d-sm-inline">Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center" routerLink="/create" aria-label="Create Report">
+            <i class="bi bi-plus-circle me-1"></i>
+            <span class="d-none d-sm-inline">แจ้งปัญหา</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div [class.container]="!isLoginPage" [class.mt-4]="!isLoginPage">
+  <router-outlet></router-outlet>
+</div>

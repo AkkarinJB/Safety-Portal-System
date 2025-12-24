@@ -1,0 +1,13 @@
+:host { display:block; }
+
+.card { border-radius: 12px; }
+
+.img-preview { display:block; overflow:hidden; border-radius:8px; }
+.img-preview img { width:100%; height:auto; max-height:160px; object-fit:cover; }
+
+.input-group .btn { min-height:44px; }
+
+@media (min-width: 768px) {
+	.card { padding: 1rem; }
+}
+
