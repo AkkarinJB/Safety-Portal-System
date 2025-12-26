@@ -1,69 +1,216 @@
-<div class="container mt-4 px-3" *ngIf="report">
-  <div class="mx-auto max-w-lg">
-  <div class="card shadow-sm border-0">
-    <div class="card-header bg-warning text-dark py-3">
-      <h4 class="mb-0"><i class="bi bi-tools me-2"></i>อัปเดตสถานะงานซ่อม #{{ report.id }}</h4>
-    </div>
-    <div class="card-body p-3">
-      
-      <div class="alert alert-secondary mb-4">
-        <h5 class="alert-heading fw-bold">{{ report.area }}</h5>
-        <p class="mb-0">{{ report.detail }}</p>
-        <hr>
-        <p class="mb-0 small">
-          <span class="badge bg-dark me-2">{{ report.category }}</span>
-          Rank: <strong>{{ report.rank }}</strong> | 
-          ผู้รับผิดชอบ: <strong>{{ report.responsiblePerson }}</strong>
-        </p>
-      </div>
-
-      <div class="row">
-        <div class="col-12 col-md-6 mb-3">
-          <label class="form-label fw-bold text-muted">รูปก่อนทำ (Before)</label>
-          <div class="bg-light rounded overflow-hidden">
-             <div class="ratio ratio-4x3">
-               <img *ngIf="report.imageBeforeUrl" [src]="getImageUrl(report.imageBeforeUrl)" class="object-fit-cover rounded" alt="before">
-               <div *ngIf="!report.imageBeforeUrl" class="d-flex align-items-center justify-content-center text-muted h-100">ไม่มีรูปภาพ</div>
-             </div>
+<div class="edit-container">
+  <div class="container-fluid px-3 px-md-4 py-4">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-10 col-xl-8">
+        
+        <!-- Loading State -->
+        <div *ngIf="isLoading" class="text-center py-5">
+          <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
           </div>
+          <p class="text-muted">กำลังโหลดข้อมูล...</p>
         </div>
 
-        <div class="col-12 col-md-6 mb-3">
-          <label class="form-label fw-bold text-success">รูปหลังทำเสร็จ (After Upload)</label>
-          <input type="file" class="form-control mb-2" (change)="onFileSelected($event)" accept="image/*">
-
-          <div *ngIf="imageAfterPreview" class="border-success rounded overflow-hidden img-preview">
-            <img [src]="imageAfterPreview" class="object-fit-cover rounded" alt="after new">
-            <div class="text-center small text-success py-1">รูปใหม่ที่จะบันทึก</div>
+        <!-- Main Content -->
+        <div *ngIf="!isLoading && report">
+          <!-- Header Card -->
+          <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-gradient-warning text-dark py-4">
+              <div class="d-flex align-items-center">
+                <div class="header-icon me-3">
+                  <i class="bi bi-tools"></i>
+                </div>
+                <div>
+                  <h4 class="mb-0 fw-bold">อัปเดตสถานะงานซ่อม</h4>
+                  <p class="mb-0 small opacity-75">รายการ #{{ report.id }}</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div *ngIf="!imageAfterPreview && report.imageAfterUrl" class="border-0 opacity-75 rounded overflow-hidden mt-2 img-preview">
-            <img [src]="getImageUrl(report.imageAfterUrl)" class="object-fit-cover rounded" alt="after current">
-            <div class="text-center small py-1">รูปปัจจุบัน</div>
+          <!-- Report Info Card -->
+          <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-body p-4">
+              <div class="report-info-header">
+                <h5 class="fw-bold mb-3">
+                  <i class="bi bi-info-circle me-2 text-primary"></i>ข้อมูลรายงาน
+                </h5>
+                <div class="report-details">
+                  <div class="detail-item">
+                    <span class="detail-label">
+                      <i class="bi bi-geo-alt me-2"></i>พื้นที่:
+                    </span>
+                    <span class="detail-value">{{ report.area }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">
+                      <i class="bi bi-file-text me-2"></i>รายละเอียด:
+                    </span>
+                    <span class="detail-value">{{ report.detail }}</span>
+                  </div>
+                  <div class="detail-badges mt-3">
+                    <span class="badge bg-light text-dark border me-2">
+                      <i class="bi bi-tag me-1"></i>{{ report.category || '-' }}
+                    </span>
+                    <span class="badge me-2" [ngClass]="{
+                      'bg-danger': report.rank === 'A',
+                      'bg-warning text-dark': report.rank === 'B',
+                      'bg-success': report.rank === 'C'
+                    }">
+                      Rank {{ report.rank }}
+                    </span>
+                    <span class="badge bg-secondary">
+                      <i class="bi bi-person me-1"></i>{{ report.responsiblePerson || '-' }}
+                    </span>
+                  </div>
+                </div>
           </div>
         </div>
       </div>
 
-      <hr class="my-4">
+          <!-- Images Section -->
+          <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-body p-4">
+              <h5 class="fw-bold mb-4">
+                <i class="bi bi-images me-2 text-primary"></i>รูปภาพ
+              </h5>
+              <div class="row g-4">
+                <!-- Before Image -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold mb-2 text-muted">
+                    <i class="bi bi-camera me-2"></i>รูปก่อนทำ (Before)
+                  </label>
+                  <div class="image-container">
+                    <div class="ratio ratio-4x3 rounded-3 overflow-hidden bg-light shadow-sm">
+                      <img 
+                        *ngIf="report.imageBeforeUrl" 
+                        [src]="getImageUrl(report.imageBeforeUrl)" 
+                        class="object-fit-cover" 
+                        alt="Before">
+                      <div 
+                        *ngIf="!report.imageBeforeUrl" 
+                        class="d-flex flex-column align-items-center justify-content-center text-muted h-100">
+                        <i class="bi bi-image display-6 mb-2"></i>
+                        <small>ไม่มีรูปภาพ</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-      <div class="row g-2 align-items-end">
+                <!-- After Image -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold mb-2 text-success">
+                    <i class="bi bi-camera-fill me-2"></i>รูปหลังทำเสร็จ (After)
+                  </label>
+                  
+                  <!-- File Upload -->
+                  <div class="image-upload-wrapper mb-3">
+                    <input 
+                      type="file" 
+                      class="form-control" 
+                      (change)="onFileSelected($event)" 
+                      accept="image/*"
+                      id="afterImageUpload">
+                    <label for="afterImageUpload" class="upload-label">
+                      <i class="bi bi-cloud-upload me-2"></i>
+                      <span *ngIf="!fileName">อัปโหลดรูปภาพใหม่</span>
+                      <span *ngIf="fileName" class="text-success">{{ fileName }}</span>
+                    </label>
+                  </div>
+
+                  <!-- New Image Preview -->
+                  <div *ngIf="imageAfterPreview" class="image-preview-card">
+                    <div class="position-relative">
+                      <div class="ratio ratio-4x3 rounded-3 overflow-hidden">
+                        <img [src]="imageAfterPreview" class="object-fit-cover" alt="After Preview">
+                      </div>
+                      <button 
+                        type="button" 
+                        class="btn btn-sm btn-danger remove-image-btn"
+                        (click)="removeImage()"
+                        title="ลบรูปภาพ">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                      <div class="preview-badge">
+                        <i class="bi bi-check-circle me-1"></i>รูปใหม่ที่จะบันทึก
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Current Image -->
+                  <div *ngIf="!imageAfterPreview && report.imageAfterUrl" class="image-container">
+                    <div class="ratio ratio-4x3 rounded-3 overflow-hidden bg-light shadow-sm">
+                      <img 
+                        [src]="getImageUrl(report.imageAfterUrl)" 
+                        class="object-fit-cover" 
+                        alt="After Current">
+                    </div>
+                    <div class="text-center mt-2">
+                      <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>รูปปัจจุบัน
+                      </small>
+                    </div>
+                  </div>
+
+                  <!-- No Image State -->
+                  <div *ngIf="!imageAfterPreview && !report.imageAfterUrl" class="no-image-placeholder">
+                    <div class="ratio ratio-4x3 rounded-3 bg-light d-flex flex-column align-items-center justify-content-center text-muted">
+                      <i class="bi bi-image display-6 mb-2"></i>
+                      <small>ยังไม่มีรูปภาพ</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status Update Form -->
+          <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-body p-4">
+              <form (ngSubmit)="onSubmit()">
+                <div class="row g-3 align-items-end">
         <div class="col-12 col-md-6">
-          <label class="form-label fw-bold">สถานะงาน</label>
-          <select class="form-select form-select-lg" [(ngModel)]="status">
-            <option [value]="0">Not Yet Done (ยังไม่ทำ)</option>
-            <option [value]="1">On Process (กำลังดำเนินการ)</option>
-            <option [value]="2">Done (เสร็จแล้ว)</option>
+                    <label class="form-label fw-bold mb-2">
+                      <i class="bi bi-flag me-2 text-primary"></i>สถานะงาน
+                    </label>
+                    <select 
+                      class="form-select form-select-lg" 
+                      [(ngModel)]="status"
+                      name="status">
+                      <option [value]="0">ยังไม่ดำเนินการ (Not Yet Done)</option>
+                      <option [value]="1">กำลังดำเนินการ (On Process)</option>
+                      <option [value]="2">เสร็จสิ้น (Done)</option>
           </select>
+                    <div class="form-text mt-2">
+                      <span class="badge" [ngClass]="'bg-' + getStatusColor(status)">
+                        <i class="bi bi-circle-fill me-1"></i>{{ getStatusLabel(status) }}
+                      </span>
+                    </div>
         </div>
-        <div class="col-12 col-md-6 text-md-end">
-            <a routerLink="/dashboard" class="btn btn-secondary w-100 w-md-auto mb-2 mb-md-0 me-md-2">ยกเลิก</a>
-            <button (click)="onSubmit()" class="btn btn-success btn-lg w-100 w-md-auto">
-              <i class="bi bi-check-circle me-2"></i> บันทึกผล
+                  <div class="col-12 col-md-6">
+                    <div class="d-flex flex-column flex-md-row gap-2">
+                      <a routerLink="/dashboard" class="btn btn-outline-secondary btn-lg flex-fill">
+                        <i class="bi bi-x-circle me-2"></i>ยกเลิก
+                      </a>
+                      <button 
+                        type="submit" 
+                        class="btn btn-success btn-lg flex-fill"
+                        [disabled]="isSubmitting">
+                        <span *ngIf="!isSubmitting">
+                          <i class="bi bi-check-circle me-2"></i>บันทึกผล
+                        </span>
+                        <span *ngIf="isSubmitting">
+                          <span class="spinner-border spinner-border-sm me-2"></span>กำลังบันทึก...
+                        </span>
             </button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
-
     </div>
   </div>
   </div>
-</div>

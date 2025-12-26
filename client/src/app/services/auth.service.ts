@@ -15,7 +15,6 @@ export class AuthService {
   login(username: string, password: string): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/login`, { username, password })
       .pipe(tap(res => {
-        // เมื่อ Login ผ่าน ให้เก็บ Token ลง LocalStorage
         if (res.token) {
           localStorage.setItem('token', res.token);
         }
@@ -32,6 +31,6 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return !!this.getToken(); // ถ้ามี token = true
+    return !!this.getToken();
   }
 }
