@@ -1,7 +1,7 @@
 # 🚀 คำแนะนำการ Deploy Safety Portal
 
 คู่มือนี้จะช่วยคุณ deploy Application ไปยัง:
-- **Database**: Render PostgreSQL (ฟรี)
+- **Database**: MariaDB (geno.kitkhakai.com) ✅ **ใช้แล้ว**
 - **Backend**: Render (.NET API)
 - **Frontend**: Vercel (Angular)
 
@@ -11,23 +11,21 @@
 
 ## 📋 ขั้นตอนการ Deploy
 
-### 1️⃣ Database: Render PostgreSQL
+### 1️⃣ Database: MariaDB (geno.kitkhakai.com) ✅
 
-1. ไปที่ https://render.com และสมัครด้วย GitHub
-2. กด **"New +"** → **"PostgreSQL"**
-3. ตั้งค่า:
-   - **Name**: `safetyportal-db`
-   - **Database**: `safetyportaldb` (หรือชื่ออื่น)
-   - **User**: `safetyportal_user` (หรือชื่ออื่น)
-   - **Region**: **Singapore** (ใกล้ไทย)
-   - **PostgreSQL Version**: Latest
-   - **Plan**: **Free**
-4. กด **"Create Database"**
-5. รอให้สร้างเสร็จ (ประมาณ 2-3 นาที)
-6. หลังจากสร้างเสร็จ:
-   - ไปที่หน้า Database → **"Connections"** หรือ **"Info"**
-   - คัดลอก **Internal Database URL** หรือ **External Database URL**
-   - รูปแบบ: `postgresql://user:password@host:port/dbname`
+**Database ถูกตั้งค่าแล้ว:**
+- **Server**: `geno.kitkhakai.com`
+- **Database**: `kitkh_geno`
+- **User**: `kitkh_geno`
+- **Port**: `3306`
+- **phpMyAdmin**: https://thsv87.hostatom.com:8443/phpMyAdmin
+
+**Connection String:**
+```
+Server=geno.kitkhakai.com;Database=kitkh_geno;User=kitkh_geno;Password=genodev@kkk;Port=3306;
+```
+
+**หมายเหตุ**: Database tables ถูกสร้างแล้วผ่าน migration (`SafetyReports` table)
 
 ---
 
@@ -69,13 +67,15 @@
 5. **Environment Variables** (สำคัญมาก!):
    ```
    ASPNETCORE_ENVIRONMENT=Production
-   ConnectionStrings__DefaultConnection=<ใส่ Connection String จาก PostgreSQL>
-   JwtSettings__Key=Your_Long_Secret_Key_Must_Be_Longer_Than_32_Bytes!
+   ConnectionStrings__DefaultConnection=Server=geno.kitkhakai.com;Database=kitkh_geno;User=kitkh_geno;Password=genodev@kkk;Port=3306;
+   JwtSettings__Key=SafetyPortal_SecretKey_MustBeLongerThan_32Bytes!
    JwtSettings__Issuer=SafetyPortalAPI
    JwtSettings__Audience=SafetyPortalClient
    Gemini__ApiKey=AIzaSyAdWY0YxDlsynQkhHNQ77H9nbo8yxpBql8
    AllowedOrigins__Vercel=<เว้นว่างไว้ก่อน จะเพิ่มหลัง deploy frontend>
    ```
+   
+   **หมายเหตุ**: Connection String ใช้ MariaDB format (ไม่ใช่ PostgreSQL)
 
 6. กด **"Create Web Service"**
 
@@ -83,16 +83,14 @@
 
 8. หลัง deploy เสร็จ จะได้ URL เช่น: `https://safetyportal-api.onrender.com`
 
-9. **รัน Migration**:
-   - เปิด **Shell** ใน Render Dashboard (เมนูด้านซ้าย)
-   - รันคำสั่ง:
+9. **ตรวจสอบ Migration**:
+   - Migration ถูกสร้างและ apply แล้วใน local
+   - Database tables ถูกสร้างแล้วใน MariaDB (`SafetyReports` table)
+   - ถ้าต้องการรัน migration อีกครั้งใน Render (ไม่จำเป็น):
      ```bash
      cd SafetyPortal.API
-     dotnet ef database update --connection "your-connection-string"
+     dotnet ef database update
      ```
-   - หรือใช้วิธีอื่น:
-     - ไปที่ PostgreSQL → "Info" → Copy connection string
-     - ใช้เครื่องมือ local หรือ pgAdmin เพื่อรัน migration
 
 10. ทดสอบ API: ไปที่ `https://your-api-url.onrender.com/swagger`
 
@@ -154,9 +152,10 @@
 - [ ] Commit และ push ไป GitHub
 - [ ] ตรวจสอบว่า repository structure ถูกต้อง
 
-### Database (Render PostgreSQL)
-- [ ] สร้าง PostgreSQL database
-- [ ] เก็บ Connection String ไว้
+### Database (MariaDB)
+- [x] Database ถูกตั้งค่าแล้ว (geno.kitkhakai.com)
+- [x] Migration ถูกสร้างและ apply แล้ว
+- [x] Tables ถูกสร้างใน database แล้ว
 
 ### Backend (Render)
 - [ ] Deploy Backend บน Render
