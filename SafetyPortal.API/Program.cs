@@ -79,11 +79,23 @@ builder.Services.AddCors(options =>
 {
     var allowedOrigins = new List<string> { "http://localhost:4200" };
     
-    // เพิ่ม Vercel URL จาก Environment Variable (ถ้ามี)
     var vercelUrl = builder.Configuration["AllowedOrigins:Vercel"];
     if (!string.IsNullOrEmpty(vercelUrl))
     {
         allowedOrigins.Add(vercelUrl);
+    }
+    
+    var vercelPreviews = builder.Configuration["AllowedOrigins:VercelPreviews"];
+    if (!string.IsNullOrEmpty(vercelPreviews))
+    {
+        var previewUrls = vercelPreviews.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (var url in previewUrls)
+        {
+            if (!string.IsNullOrWhiteSpace(url) && !allowedOrigins.Contains(url))
+            {
+                allowedOrigins.Add(url.Trim());
+            }
+        }
     }
     
     options.AddPolicy("ClientApp",
