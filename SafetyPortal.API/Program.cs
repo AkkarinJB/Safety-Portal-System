@@ -8,7 +8,10 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        new MariaDbServerVersion(new Version(10, 11, 6)) // MariaDB 10.11.6 (ตาม server version)
+    ));
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? "SecretKey_Must_Be_Longer_Than_32_Bytes_Default");
