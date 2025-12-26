@@ -96,14 +96,19 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Enable Swagger in all environments (optional - comment out if not needed in production)
+// Enable Swagger in all environments
 app.UseSwagger();
-if (app.Environment.IsDevelopment())
+app.UseSwaggerUI(c =>
 {
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "SafetyPortal API v1");
+    c.RoutePrefix = "swagger";
+});
 
-app.UseHttpsRedirection();
+// Disable HTTPS redirection on Render (Render handles HTTPS automatically)
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
 app.UseStaticFiles();
 
 app.UseCors("ClientApp"); 
