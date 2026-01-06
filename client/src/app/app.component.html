@@ -1,14 +1,32 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm" *ngIf="!isLoginPage">
   <div class="container-fluid px-3">
-    <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+    <a class="navbar-brand fw-bold d-flex align-items-center" routerLink="/dashboard">
       <i class="bi bi-shield-check me-2"></i>
-      <span class="fs-6">Safety Portal</span>
+      <span class="fs-6 d-none d-sm-inline">Safety Portal</span>
+      <span class="fs-6 d-inline d-sm-none">Safety</span>
     </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    
+    <button 
+      class="btn btn-outline-light btn-sm d-lg-none logout-btn-mobile" 
+      (click)="logout()"
+      aria-label="ออกจากระบบ"
+      title="ออกจากระบบ">
+      <i class="bi bi-box-arrow-right"></i>
+    </button>
+    
+    <button 
+      class="navbar-toggler" 
+      type="button" 
+      data-bs-toggle="collapse" 
+      data-bs-target="#navbarNav" 
+      aria-controls="navbarNav" 
+      aria-expanded="false" 
+      aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
+    
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
+      <ul class="navbar-nav ms-auto align-items-center">
         <li class="nav-item">
           <a class="nav-link active d-flex align-items-center" routerLink="/dashboard" aria-label="Dashboard">
             <i class="bi bi-speedometer2 me-1"></i>
@@ -20,6 +38,24 @@
             <i class="bi bi-plus-circle me-1"></i>
             <span class="d-none d-sm-inline">แจ้งปัญหา</span>
           </a>
+        </li>
+        <li class="nav-item d-none d-lg-block">
+          <button 
+            class="btn btn-outline-light btn-sm ms-2 d-flex align-items-center logout-btn" 
+            (click)="logout()"
+            aria-label="ออกจากระบบ">
+            <i class="bi bi-box-arrow-right me-1"></i>
+            <span>ออกจากระบบ</span>
+          </button>
+        </li>
+        <li class="nav-item d-lg-none">
+          <button 
+            class="nav-link btn btn-link text-white w-100 text-start d-flex align-items-center logout-btn-collapse" 
+            (click)="logout()"
+            aria-label="ออกจากระบบ">
+            <i class="bi bi-box-arrow-right me-2"></i>
+            <span>ออกจากระบบ</span>
+          </button>
         </li>
       </ul>
     </div>

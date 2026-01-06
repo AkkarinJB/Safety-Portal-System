@@ -1,36 +1,55 @@
-<div class="d-flex align-items-center justify-content-center vh-100 bg-light px-3">
-  <div class="card shadow border-0 w-100 max-w-sm">
-    <div class="card-body p-4 text-center">
+<div class="login-container d-flex align-items-center justify-content-center vh-100">
+  <div class="login-card">
+    <div class="login-content text-center">
       
-      <div class="mb-4 text-primary">
-        <i class="bi bi-shield-lock-fill display-1"></i>
+      <!-- Icon -->
+      <div class="login-icon mb-4">
+        <i class="bi bi-shield-lock-fill"></i>
       </div>
       
-      <h3 class="fw-bold mb-3">Safety Portal</h3>
-      <div class="form-floating mb-3">
-        <input type="text" class="form-control" id="usernameInput" 
-               [(ngModel)]="username" placeholder="Username" (keyup.enter)="login()">
-        <label for="usernameInput"><i class="bi bi-person me-2"></i>ชื่อผู้ใช้งาน</label>
-      </div>
-
-      <div class="form-floating mb-3 position-relative">
-        <input [type]="showPassword ? 'text' : 'password'" class="form-control" id="passwordInput" 
-               [(ngModel)]="password" placeholder="Password" (keyup.enter)="login()"
-               [style.padding-right]="'3rem'">
-        <label for="passwordInput"><i class="bi bi-key me-2"></i>รหัสผ่าน</label>
-        <button type="button" 
-                class="btn btn-link password-toggle"
-                (click)="togglePasswordVisibility()"
-                [attr.aria-label]="showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'">
-          <i class="bi" [class.bi-eye]="!showPassword" [class.bi-eye-slash]="showPassword"></i>
+      <!-- Title -->
+      <h2 class="login-title mb-5">Safety Portal</h2>
+      
+      <!-- Input Field -->
+      <div class="form-floating mb-4 position-relative">
+        <input 
+          [type]="showCode ? 'text' : 'password'" 
+          class="form-control form-control-lg code-input" 
+          id="codeInput" 
+          [(ngModel)]="code" 
+          (input)="onCodeChange()"
+          (keyup.enter)="login()"
+          maxlength="4" 
+          pattern="[0-9]*" 
+          inputmode="numeric"
+          autofocus
+          autocomplete="one-time-code"
+          >
+        <button 
+          type="button" 
+          class="btn btn-link password-toggle"
+          (click)="toggleCodeVisibility()"
+          [attr.aria-label]="showCode ? 'ซ่อนรหัส' : 'แสดงรหัส'">
+          <i class="bi" [class.bi-eye]="!showCode" [class.bi-eye-slash]="showCode"></i>
         </button>
       </div>
       
-      <button (click)="login()" class="btn btn-primary w-100 btn-lg mt-2 shadow-sm">
-        เข้าสู่ระบบ
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="error-message mb-3">
+        {{ errorMessage }}
+      </div>
+      
+      <!-- Login Button -->
+      <button 
+        (click)="login()" 
+        class="login-button"
+        [disabled]="code.length !== 4 || isSubmitting">
+        <span *ngIf="!isSubmitting">เข้าสู่ระบบ</span>
+        <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
       </button>
 
-      <div class="mt-3 text-muted small">
+      <!-- Footer -->
+      <div class="login-footer mt-4">
         Safety Portal System v1.0
       </div>
 

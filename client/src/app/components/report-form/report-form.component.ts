@@ -15,11 +15,14 @@ import { AlertService } from '../../services/alert.service';
 export class ReportFormComponent implements OnDestroy {
   formData = {
     area: '',
+    reportDate: new Date().toISOString().split('T')[0], 
     detail: '',
     category: '',
+    stop6: 6, 
     rank: 'C',
+    suggestion: '',
     responsiblePerson: '',
-    suggestion: ''
+    status: 'NotYetDone'
   };
 
   selectedFile: File | null = null;
@@ -28,7 +31,9 @@ export class ReportFormComponent implements OnDestroy {
   isSubmitting = false;
   fileName = '';
   isListening = false;
+  isListeningSuggestion = false; 
   private recognition: any = null;
+  private recognitionSuggestion: any = null; 
 
   constructor(
     private api: SafetyApiService,
@@ -39,12 +44,11 @@ export class ReportFormComponent implements OnDestroy {
   }
 
   initSpeechRecognition() {
-    // Check if browser supports Speech Recognition
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     
     if (SpeechRecognition) {
       this.recognition = new SpeechRecognition();
-      this.recognition.lang = 'th-TH'; // Thai language
+      this.recognition.lang = 'th-TH';
       this.recognition.continuous = false;
       this.recognition.interimResults = false;
 
@@ -56,71 +60,112 @@ export class ReportFormComponent implements OnDestroy {
       };
 
       this.recognition.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
-        this.isListening = false;
-        
-        let errorMessage = 'เกิดข้อผิดพลาดในการรับเสียง';
-        switch(event.error) {
-          case 'no-speech':
-            errorMessage = 'ไม่พบเสียง กรุณาลองอีกครั้ง';
-            break;
-          case 'audio-capture':
-            errorMessage = 'ไม่พบไมโครโฟน กรุณาตรวจสอบอุปกรณ์';
-            break;
-          case 'not-allowed':
-            errorMessage = 'ไม่อนุญาตให้ใช้ไมโครโฟน กรุณาอนุญาตในเบราว์เซอร์';
-            break;
-          case 'network':
-            errorMessage = 'เกิดข้อผิดพลาดจากเครือข่าย';
-            break;
-        }
-        this.alertService.toastError(errorMessage);
+        this.handleSpeechError(event.error, 'detail');
       };
 
       this.recognition.onend = () => {
         this.isListening = false;
       };
+
+      this.recognitionSuggestion = new SpeechRecognition();
+      this.recognitionSuggestion.lang = 'th-TH';
+      this.recognitionSuggestion.continuous = false;
+      this.recognitionSuggestion.interimResults = false;
+
+      this.recognitionSuggestion.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        this.formData.suggestion += (this.formData.suggestion ? ' ' : '') + transcript;
+        this.isListeningSuggestion = false;
+        this.alertService.toastSuccess('รับเสียงเรียบร้อย');
+      };
+
+      this.recognitionSuggestion.onerror = (event: any) => {
+        this.handleSpeechError(event.error, 'suggestion');
+      };
+
+      this.recognitionSuggestion.onend = () => {
+        this.isListeningSuggestion = false;
+      };
     }
   }
 
-  startVoiceInput() {
-    if (!this.recognition) {
+  private handleSpeechError(error: string, type: string) {
+    console.error('Speech recognition error:', error);
+    if (type === 'detail') {
+      this.isListening = false;
+    } else {
+      this.isListeningSuggestion = false;
+    }
+    
+    let errorMessage = 'เกิดข้อผิดพลาดในการรับเสียง';
+    switch(error) {
+      case 'no-speech':
+        errorMessage = 'ไม่พบเสียง กรุณาลองอีกครั้ง';
+        break;
+      case 'audio-capture':
+        errorMessage = 'ไม่พบไมโครโฟน กรุณาตรวจสอบอุปกรณ์';
+        break;
+      case 'not-allowed':
+        errorMessage = 'ไม่อนุญาตให้ใช้ไมโครโฟน กรุณาอนุญาตในเบราว์เซอร์';
+        break;
+      case 'network':
+        errorMessage = 'เกิดข้อผิดพลาดจากเครือข่าย';
+        break;
+    }
+    this.alertService.toastError(errorMessage);
+  }
+
+  startVoiceInput(type: 'detail' | 'suggestion' = 'detail') {
+    const recognition = type === 'detail' ? this.recognition : this.recognitionSuggestion;
+    const isListening = type === 'detail' ? this.isListening : this.isListeningSuggestion;
+
+    if (!recognition) {
       this.alertService.toastError('เบราว์เซอร์ของคุณไม่รองรับการรับเสียง กรุณาใช้ Chrome หรือ Edge');
       return;
     }
 
-    if (this.isListening) {
-      this.stopVoiceInput();
+    if (isListening) {
+      this.stopVoiceInput(type);
       return;
     }
 
     try {
-      this.isListening = true;
-      this.recognition.start();
+      if (type === 'detail') {
+        this.isListening = true;
+        this.recognition.start();
+      } else {
+        this.isListeningSuggestion = true;
+        this.recognitionSuggestion.start();
+      }
       this.alertService.toastSuccess('กำลังฟังเสียง... พูดได้เลย');
     } catch (error: any) {
-      this.isListening = false;
+      if (type === 'detail') {
+        this.isListening = false;
+      } else {
+        this.isListeningSuggestion = false;
+      }
       this.alertService.toastError('ไม่สามารถเริ่มรับเสียงได้: ' + error.message);
     }
   }
 
-  stopVoiceInput() {
-    if (this.recognition && this.isListening) {
+  stopVoiceInput(type: 'detail' | 'suggestion' = 'detail') {
+    if (type === 'detail' && this.recognition && this.isListening) {
       this.recognition.stop();
       this.isListening = false;
+    } else if (type === 'suggestion' && this.recognitionSuggestion && this.isListeningSuggestion) {
+      this.recognitionSuggestion.stop();
+      this.isListeningSuggestion = false;
     }
   }
 
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         this.alertService.toastError('ไฟล์ภาพต้องไม่เกิน 5MB');
         return;
       }
 
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         this.alertService.toastError('กรุณาเลือกไฟล์ภาพเท่านั้น');
         return;
@@ -141,7 +186,6 @@ export class ReportFormComponent implements OnDestroy {
     this.selectedFile = null;
     this.imagePreview = null;
     this.fileName = '';
-    // Reset file input
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
@@ -172,7 +216,6 @@ export class ReportFormComponent implements OnDestroy {
   }
 
   onSubmit() {
-    // Validation
     if (!this.formData.area.trim()) {
       this.alertService.toastError('กรุณากรอกพื้นที่ที่พบปัญหา');
       return;
@@ -184,7 +227,7 @@ export class ReportFormComponent implements OnDestroy {
     }
 
     this.isSubmitting = true;
-    this.api.createReport(this.formData, this.selectedFile!).subscribe({
+    this.api.createReport(this.formData, this.selectedFile || undefined).subscribe({
       next: () => {
         this.alertService.success('แจ้งปัญหาเรียบร้อย!', 'ระบบได้บันทึกข้อมูลของคุณแล้ว');
         this.router.navigate(['/dashboard']);
@@ -197,7 +240,7 @@ export class ReportFormComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
-    // Stop voice recognition when component is destroyed
-    this.stopVoiceInput();
+    this.stopVoiceInput('detail');
+    this.stopVoiceInput('suggestion');
   }
 }

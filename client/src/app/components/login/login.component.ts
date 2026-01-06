@@ -13,9 +13,11 @@ import { AlertService } from '../../services/alert.service';
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
-  username = '';
-  password = '';
-  showPassword = false;
+  code = '';
+  showCode = false;
+  isSubmitting = false;
+  isError = false;
+  errorMessage = '';
 
   constructor(
     private auth: AuthService, 
@@ -23,19 +25,72 @@ export class LoginComponent {
     private alert: AlertService
   ) {}
 
-  togglePasswordVisibility() {
-    this.showPassword = !this.showPassword;
+  toggleCodeVisibility() {
+    this.showCode = !this.showCode;
+  }
+
+  onCodeChange() {
+    this.code = this.code.replace(/[^0-9]/g, '');
+    
+    if (this.code.length > 4) {
+      this.code = this.code.substring(0, 4);
+    }
+    
+    if (this.isError) {
+      this.isError = false;
+      this.errorMessage = '';
+    }
+    
+    if (this.code.length === 4) {
+      setTimeout(() => {
+        this.login();
+      }, 300);
+    }
   }
 
   login() {
-    this.auth.login(this.username, this.password).subscribe({
+    if (!this.code.trim()) {
+      this.showError('กรุณากรอกรหัส 4 ตัว');
+      return;
+    }
+
+    if (this.code.length !== 4) {
+      this.showError('กรุณากรอกรหัส 4 ตัว');
+      return;
+    }
+
+    if (!/^\d{4}$/.test(this.code)) {
+      this.showError('รหัสต้องเป็นตัวเลข 4 ตัว');
+      return;
+    }
+
+    this.isSubmitting = true;
+    this.isError = false;
+    this.errorMessage = '';
+
+    this.auth.login(this.code).subscribe({
       next: () => {
         this.alert.toastSuccess('ยินดีต้อนรับกลับครับ!');
         this.router.navigate(['/dashboard']);
       },
       error: () => {
-        this.alert.error('เข้าสู่ระบบไม่สำเร็จ', 'Username หรือ Password ผิดครับ');
+        this.isSubmitting = false;
+        this.showError('รหัสไม่ถูกต้อง');
+        this.code = '';
+        setTimeout(() => {
+          const input = document.getElementById('codeInput') as HTMLInputElement;
+          if (input) input.focus();
+        }, 100);
       }
     });
+  }
+
+  private showError(message: string) {
+    this.isError = true;
+    this.errorMessage = message;
+    setTimeout(() => {
+      this.isError = false;
+      this.errorMessage = '';
+    }, 3000);
   }
 }

@@ -3,6 +3,8 @@ import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
+import { AuthService } from './services/auth.service';
+import { AlertService } from './services/alert.service';
 
 @Component({
   selector: 'app-root',
@@ -14,7 +16,11 @@ export class AppComponent implements OnInit, OnDestroy {
   isLoginPage = false;
   private routerSubscription?: Subscription;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private authService: AuthService,
+    private alertService: AlertService
+  ) {}
 
   ngOnInit() {
     // ตรวจสอบ route เริ่มต้น
@@ -36,5 +42,15 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private checkRoute() {
     this.isLoginPage = this.router.url === '/login';
+  }
+
+  logout() {
+    this.alertService.confirm('ออกจากระบบ?', 'คุณต้องการออกจากระบบหรือไม่?')
+      .then((isConfirmed) => {
+        if (isConfirmed) {
+          this.authService.logout();
+          this.alertService.toastSuccess('ออกจากระบบเรียบร้อย');
+        }
+      });
   }
 }

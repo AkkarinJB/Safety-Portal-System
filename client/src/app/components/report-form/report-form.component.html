@@ -13,7 +13,7 @@
               <div>
                 <h4 class="mb-0 fw-bold">แจ้งปัญหาความปลอดภัย</h4>
                 <p class="mb-0 small opacity-90">กรุณากรอกข้อมูลให้ครบถ้วนเพื่อการดำเนินการที่รวดเร็ว</p>
-              </div>
+          </div>
             </div>
           </div>
         </div>
@@ -24,7 +24,7 @@
             
             <form (ngSubmit)="onSubmit()" #reportForm="ngForm">
               
-              <!-- Area & Image Section -->
+              <!-- Area & Date Section -->
               <div class="row g-4 mb-4">
                 <!-- Area Input -->
                 <div class="col-12 col-md-6">
@@ -45,8 +45,27 @@
                   </div>
                 </div>
 
-                <!-- Image Upload -->
+                <!-- Report Date -->
                 <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold mb-2">
+                    <i class="bi bi-calendar me-2 text-primary"></i>วัน/เดือน/ปี
+                    <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    type="date" 
+                    class="form-control form-control-lg" 
+                    [(ngModel)]="formData.reportDate" 
+                    name="reportDate" 
+                    required>
+                  <div class="form-text">
+                    <i class="bi bi-info-circle me-1"></i>เลือกวันที่พบปัญหา
+                  </div>
+                </div>
+              </div>
+
+              <!-- Image Upload Section -->
+              <div class="row g-4 mb-4">
+                <div class="col-12">
                   <label class="form-label fw-bold mb-2">
                     <i class="bi bi-image me-2 text-primary"></i>รูปภาพ (Before)
                   </label>
@@ -132,49 +151,81 @@
                     <span *ngIf="isAnalyzing">
                       <span class="spinner-border spinner-border-sm me-2"></span>กำลังประมวลผล...
                     </span>
+            </button>
+          </div>
+                -->
+        </div>
+
+              <!-- Suggestion Section -->
+              <div class="mb-4">
+                <label class="form-label fw-bold mb-2">
+                  <i class="bi bi-lightbulb me-2 text-warning"></i>ข้อแนะนำในการแก้ไขปัญหา
+                </label>
+                <div class="textarea-wrapper position-relative">
+                  <textarea 
+                    class="form-control form-control-lg" 
+                    rows="3" 
+                    [(ngModel)]="formData.suggestion" 
+                    name="suggestion" 
+                    placeholder="แนะนำวิธีการแก้ไขปัญหา..."></textarea>
+                  <button 
+                    type="button" 
+                    class="btn btn-sm voice-input-btn"
+                    (click)="startVoiceInput('suggestion')"
+                    [class.btn-danger]="isListeningSuggestion"
+                    [class.btn-outline-warning]="!isListeningSuggestion"
+                    title="พิมพ์ด้วยเสียง">
+                    <i *ngIf="!isListeningSuggestion" class="bi bi-mic"></i>
+                    <i *ngIf="isListeningSuggestion" class="bi bi-mic-fill"></i>
+                    <span *ngIf="isListeningSuggestion" class="spinner-border spinner-border-sm ms-1"></span>
                   </button>
                 </div>
-                -->
+                <div class="mt-2">
+                  <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>หรือใช้ปุ่มเสียงเพื่อพูดแทนการพิมพ์
+                  </small>
+                </div>
               </div>
 
               <!-- Divider -->
               <hr class="my-4 opacity-25">
 
-              <!-- Category, Rank, Responsible Person -->
+              <!-- Stop6, Rank, Status, Responsible Person -->
               <div class="row g-4 mb-4">
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-6">
                   <label class="form-label fw-bold mb-2">
-                    <i class="bi bi-tag me-2 text-primary"></i>หมวดหมู่
+                    <i class="bi bi-shield-exclamation me-2 text-primary"></i>Stop6
+                    <span class="text-danger">*</span>
                   </label>
                   <select 
                     class="form-select form-select-lg" 
-                    [(ngModel)]="formData.category" 
-                    name="category">
-                    <option value="">-- เลือกหมวดหมู่ --</option>
-                    <option value="เครื่องจักร">เครื่องจักร</option>
-                    <option value="ไฟฟ้า">ไฟฟ้า</option>
-                    <option value="ที่สูง">ที่สูง</option>
-                    <option value="ยานพาหนะ">ยานพาหนะ</option>
-                    <option value="ของหล่น">ของหล่น</option>
-                    <option value="อื่นๆ">อื่นๆ</option>
+                    [(ngModel)]="formData.stop6" 
+                    name="stop6"
+                    required>
+                    <option [value]="1">1. อันตรายจากเครื่องจักร</option>
+                    <option [value]="2">2. อันตรายจากวัตถุหนักตกใส่</option>
+                    <option [value]="3">3. อันตรายจากยานพาหนะ</option>
+                    <option [value]="4">4. อันตรายจากการตกจากที่สูง</option>
+                    <option [value]="5">5. อันตรายจากกระแสไฟฟ้า</option>
+                    <option [value]="6">6. อื่นๆ</option>
                   </select>
                 </div>
 
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-6">
                   <label class="form-label fw-bold mb-2">
-                    <i class="bi bi-exclamation-triangle me-2 text-primary"></i>ระดับความเสี่ยง
+                    <i class="bi bi-exclamation-triangle me-2 text-primary"></i>Rank ความเร่งด่วน
+                    <span class="text-danger">*</span>
                   </label>
                   <select 
                     class="form-select form-select-lg" 
                     [(ngModel)]="formData.rank" 
-                    name="rank">
-                    <option value="A">
-                      <span class="text-danger">A - สูง (หยุดงานทันที)</span>
-                    </option>
-                    <option value="B">B - กลาง (แก้ไขใน 7 วัน)</option>
-                    <option value="C">C - ต่ำ (เฝ้าระวัง)</option>
+                    name="rank"
+                    required>
+                    <option value="A">A - เร่งด่วนมาก</option>
+                    <option value="B">B - เร่งด่วน</option>
+                    <option value="C">C - ปานกลาง</option>
                   </select>
-                  <div class="form-text">
+                  <div class="form-text mt-1">
                     <span class="badge" [ngClass]="{
                       'bg-danger': formData.rank === 'A',
                       'bg-warning text-dark': formData.rank === 'B',
@@ -185,7 +236,23 @@
                   </div>
                 </div>
 
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold mb-2">
+                    <i class="bi bi-flag me-2 text-primary"></i>สถานะการดำเนินการ
+                    <span class="text-danger">*</span>
+                  </label>
+                  <select 
+                    class="form-select form-select-lg" 
+                    [(ngModel)]="formData.status" 
+                    name="status"
+                    required>
+                    <option value="NotYetDone">ยังไม่ดำเนินการ</option>
+                    <option value="OnProcess">กำลังดำเนินการ</option>
+                    <option value="Done">เสร็จสิ้น</option>
+                  </select>
+                </div>
+
+                <div class="col-12 col-md-6">
                   <label class="form-label fw-bold mb-2">
                     <i class="bi bi-person me-2 text-primary"></i>ผู้รับผิดชอบ
                   </label>
@@ -227,12 +294,12 @@
                     <span class="spinner-border spinner-border-sm me-2"></span>กำลังบันทึก...
                   </span>
                 </button>
-              </div>
-
-            </form>
-          </div>
         </div>
-      </div>
+
+      </form>
+    </div>
+  </div>
+</div>
     </div>
   </div>
 </div>

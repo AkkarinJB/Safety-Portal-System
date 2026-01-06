@@ -17,7 +17,8 @@ export class SafetyApiService {
     const rankMap: { [key: number]: string } = { 0: 'A', 1: 'B', 2: 'C' };
     return reports.map(r => ({
       ...r,
-      rank: rankMap[Number(r.rank)] || String(r.rank)
+      rank: rankMap[Number(r.rank)] || String(r.rank),
+      stop6: r.stop6 || 6 
     }));
   }
 
@@ -31,18 +32,23 @@ export class SafetyApiService {
     return this.http.get<SafetyReport>(`${this.apiUrl}/SafetyReports/${id}`).pipe(
       map(report => ({
         ...report,
-        rank: { 0: 'A', 1: 'B', 2: 'C' }[Number(report.rank)] || String(report.rank)
+        rank: { 0: 'A', 1: 'B', 2: 'C' }[Number(report.rank)] || String(report.rank),
+        stop6: report.stop6 || 6 
       }))
     );
   }
 
-  createReport(data: any, file: File): Observable<any> {
+  createReport(data: any, file?: File): Observable<any> {
     const formData = new FormData();
     formData.append('area', data.area);
+    formData.append('reportDate', data.reportDate);
     formData.append('detail', data.detail);
     formData.append('category', data.category || '');
+    formData.append('stop6', data.stop6.toString());
     formData.append('rank', data.rank);
+    formData.append('suggestion', data.suggestion || '');
     formData.append('responsiblePerson', data.responsiblePerson);
+    formData.append('status', data.status || 'NotYetDone');
     if (file) {
       formData.append('imageBefore', file);
     }
@@ -50,12 +56,26 @@ export class SafetyApiService {
   }
 
  
-  updateReport(id: number, status: any, file?: File): Observable<any> {
+  updateReport(id: number, data: any, fileBefore?: File, fileAfter?: File): Observable<any> {
     const formData = new FormData();
-    formData.append('status', status); 
-    if (file) {
-      formData.append('imageAfter', file);
+    
+    if (data.area) formData.append('area', data.area);
+    if (data.reportDate) formData.append('reportDate', data.reportDate);
+    if (data.detail) formData.append('detail', data.detail);
+    if (data.category) formData.append('category', data.category);
+    if (data.stop6 !== undefined) formData.append('stop6', data.stop6.toString());
+    if (data.rank) formData.append('rank', data.rank);
+    if (data.suggestion) formData.append('suggestion', data.suggestion);
+    if (data.responsiblePerson) formData.append('responsiblePerson', data.responsiblePerson);
+    if (data.status) formData.append('status', data.status);
+    
+    if (fileBefore) {
+      formData.append('imageBefore', fileBefore);
     }
+    if (fileAfter) {
+      formData.append('imageAfter', fileAfter);
+    }
+    
     return this.http.put(`${this.apiUrl}/SafetyReports/${id}`, formData);
   }
 

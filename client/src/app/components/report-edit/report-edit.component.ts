@@ -16,13 +16,26 @@ import { environment } from '../../../environments/environment';
 })
 export class ReportEditComponent implements OnInit {
   report: SafetyReport | null = null;
-  selectedFile: File | null = null;
+  formData: any = {
+    area: '',
+    reportDate: '',
+    detail: '',
+    category: '',
+    stop6: 6,
+    rank: 'C',
+    suggestion: '',
+    responsiblePerson: '',
+    status: 'NotYetDone'
+  };
+  
+  selectedFileBefore: File | null = null;
+  selectedFileAfter: File | null = null;
+  imageBeforePreview: string | null = null;
   imageAfterPreview: string | null = null;
   isLoading = true;
   isSubmitting = false;
-  fileName = '';
-  
-  status: number = 0;
+  fileNameBefore = '';
+  fileNameAfter = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -45,9 +58,25 @@ export class ReportEditComponent implements OnInit {
     this.api.getReportById(id).subscribe({
       next: (data) => {
         this.report = data;
-        if (data.status === 'Done') this.status = 2;
-        else if (data.status === 'OnProcess') this.status = 1;
-        else this.status = 0;
+        this.formData = {
+          area: data.area || '',
+          reportDate: data.reportDate ? data.reportDate.split('T')[0] : new Date().toISOString().split('T')[0],
+          detail: data.detail || '',
+          category: data.category || '',
+          stop6: data.stop6 || 6,
+          rank: data.rank || 'C',
+          suggestion: data.suggestion || '',
+          responsiblePerson: data.responsiblePerson || '',
+          status: data.status || 'NotYetDone'
+        };
+        
+        if (data.imageBeforeUrl) {
+          this.imageBeforePreview = this.getImageUrl(data.imageBeforeUrl);
+        }
+        if (data.imageAfterUrl) {
+          this.imageAfterPreview = this.getImageUrl(data.imageAfterUrl);
+        }
+        
         this.isLoading = false;
       },
       error: () => {
@@ -57,65 +86,101 @@ export class ReportEditComponent implements OnInit {
     });
   }
 
-  onFileSelected(event: any) {
+  onFileSelected(event: any, type: 'before' | 'after') {
     const file = event.target.files[0];
     if (file) {
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         this.alertService.toastError('ไฟล์ภาพต้องไม่เกิน 5MB');
         return;
       }
 
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         this.alertService.toastError('กรุณาเลือกไฟล์ภาพเท่านั้น');
         return;
       }
 
-      this.selectedFile = file;
-      this.fileName = file.name;
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.imageAfterPreview = reader.result as string;
-      };
-      reader.readAsDataURL(file);
+      if (type === 'before') {
+        this.selectedFileBefore = file;
+        this.fileNameBefore = file.name;
+        const reader = new FileReader();
+        reader.onload = () => {
+          this.imageBeforePreview = reader.result as string;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        this.selectedFileAfter = file;
+        this.fileNameAfter = file.name;
+        const reader = new FileReader();
+        reader.onload = () => {
+          this.imageAfterPreview = reader.result as string;
+        };
+        reader.readAsDataURL(file);
+      }
     }
   }
 
-  removeImage() {
-    this.selectedFile = null;
-    this.imageAfterPreview = null;
-    this.fileName = '';
-    // Reset file input
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
+  removeImage(type: 'before' | 'after') {
+    if (type === 'before') {
+      this.selectedFileBefore = null;
+      this.imageBeforePreview = this.report?.imageBeforeUrl ? this.getImageUrl(this.report.imageBeforeUrl) : null;
+      this.fileNameBefore = '';
+    } else {
+      this.selectedFileAfter = null;
+      this.imageAfterPreview = this.report?.imageAfterUrl ? this.getImageUrl(this.report.imageAfterUrl) : null;
+      this.fileNameAfter = '';
     }
   }
 
-  getStatusLabel(status: number): string {
-    const statusMap: { [key: number]: string } = {
-      0: 'ยังไม่ดำเนินการ',
-      1: 'กำลังดำเนินการ',
-      2: 'เสร็จสิ้น'
+  getStatusLabel(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'NotYetDone': 'ยังไม่ดำเนินการ',
+      'OnProcess': 'กำลังดำเนินการ',
+      'Done': 'เสร็จสิ้น'
     };
     return statusMap[status] || 'ไม่ทราบสถานะ';
   }
 
-  getStatusColor(status: number): string {
-    const colorMap: { [key: number]: string } = {
-      0: 'secondary',
-      1: 'primary',
-      2: 'success'
+  getStatusColor(status: string): string {
+    const colorMap: { [key: string]: string } = {
+      'NotYetDone': 'secondary',
+      'OnProcess': 'primary',
+      'Done': 'success'
     };
     return colorMap[status] || 'secondary';
+  }
+
+  getStop6Label(stop6: number): string {
+    const stop6Map: { [key: number]: string } = {
+      1: 'อันตรายจากเครื่องจักร',
+      2: 'อันตรายจากวัตถุหนักตกใส่',
+      3: 'อันตรายจากยานพาหนะ',
+      4: 'อันตรายจากการตกจากที่สูง',
+      5: 'อันตรายจากกระแสไฟฟ้า',
+      6: 'อื่นๆ'
+    };
+    return stop6Map[stop6] || 'อื่นๆ';
   }
 
   onSubmit() {
     if (!this.report) return;
 
+    if (!this.formData.area.trim()) {
+      this.alertService.toastError('กรุณากรอกพื้นที่');
+      return;
+    }
+
+    if (!this.formData.detail.trim()) {
+      this.alertService.toastError('กรุณากรอกรายละเอียด');
+      return;
+    }
+
     this.isSubmitting = true;
-    this.api.updateReport(this.report.id!, this.status, this.selectedFile!).subscribe({
+    this.api.updateReport(
+      this.report.id!, 
+      this.formData, 
+      this.selectedFileBefore || undefined,
+      this.selectedFileAfter || undefined
+    ).subscribe({
       next: () => {
         this.alertService.success('อัปเดตงานเรียบร้อย!', 'ข้อมูลถูกบันทึกเรียบร้อยแล้ว');
         this.router.navigate(['/dashboard']);

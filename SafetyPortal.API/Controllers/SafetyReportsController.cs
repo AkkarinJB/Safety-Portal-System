@@ -51,12 +51,15 @@ namespace SafetyPortal.API.Controllers
             var safetyReport = new SafetyReports
             {
                 Area = dto.Area,
+                ReportDate = dto.ReportDate,
                 Detail = dto.Detail,
                 Category = dto.Category,
+                Stop6 = dto.Stop6,
                 Rank = dto.Rank,
+                Suggestion = dto.Suggestion,
                 ResponsiblePerson = dto.ResponsiblePerson,
                 ImageBeforeUrl = imagePath,
-                Status = ReportStatus.NotYetDone,
+                Status = dto.Status,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -66,26 +69,54 @@ namespace SafetyPortal.API.Controllers
             return CreatedAtAction("GetSafetyReport", new { id = safetyReport.Id }, safetyReport);
         }
 
-        // 4. PUT: อัปเดตงาน (Fixer ส่งรูป After)
+        // 4. PUT: อัปเดตงาน
         [HttpPut("{id}")]
         public async Task<IActionResult> PutSafetyReport(int id, [FromForm] UpdateReportDto dto)
         {
             var safetyReport = await _context.SafetyReports.FindAsync(id);
             if (safetyReport == null) return NotFound();
 
+            // อัปเดต fields ที่ส่งมา
+            if (!string.IsNullOrEmpty(dto.Area))
+                safetyReport.Area = dto.Area;
+            
+            if (dto.ReportDate.HasValue)
+                safetyReport.ReportDate = dto.ReportDate.Value;
+            
+            if (!string.IsNullOrEmpty(dto.Detail))
+                safetyReport.Detail = dto.Detail;
+            
+            if (!string.IsNullOrEmpty(dto.Category))
+                safetyReport.Category = dto.Category;
+            
+            if (dto.Stop6.HasValue)
+                safetyReport.Stop6 = dto.Stop6.Value;
+            
+            if (dto.Rank.HasValue)
+                safetyReport.Rank = dto.Rank.Value;
+            
+            if (!string.IsNullOrEmpty(dto.Suggestion))
+                safetyReport.Suggestion = dto.Suggestion;
+            
+            if (!string.IsNullOrEmpty(dto.ResponsiblePerson))
+                safetyReport.ResponsiblePerson = dto.ResponsiblePerson;
+            
+            if (dto.Status.HasValue)
+                safetyReport.Status = dto.Status.Value;
+
+            // อัปเดตรูปภาพ
+            if (dto.ImageBefore != null)
+            {
+                safetyReport.ImageBeforeUrl = await SaveImage(dto.ImageBefore);
+            }
+
             if (dto.ImageAfter != null)
             {
                 safetyReport.ImageAfterUrl = await SaveImage(dto.ImageAfter);
-                safetyReport.Status = ReportStatus.Done; // ถ้ามีรูป After ถือว่าเสร็จ
-            }
-            else
-            {
-                safetyReport.Status = dto.Status;
-            }
-
-            if (!string.IsNullOrEmpty(dto.Suggestion))
-            {
-                safetyReport.Suggestion = dto.Suggestion;
+                if (safetyReport.Status == ReportStatus.NotYetDone || safetyReport.Status == ReportStatus.OnProcess)
+                {
+                    safetyReport.Status = ReportStatus.Done; // ถ้ามีรูป After ถือว่าเสร็จ
+                }
             }
 
             safetyReport.UpdatedAt = DateTime.UtcNow;

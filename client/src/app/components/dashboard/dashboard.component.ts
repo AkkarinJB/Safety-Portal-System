@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common'; 
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { SafetyApiService } from '../../services/safety-api.service';
 import { SafetyReport } from '../../models/safety-report';
 import { AlertService } from '../../services/alert.service';
@@ -31,7 +31,8 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   constructor(
     private api: SafetyApiService,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -76,40 +77,32 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       this.overviewChart.destroy();
     }
 
-    const rankA = this.getRankCount('A');
-    const rankB = this.getRankCount('B');
-    const rankC = this.getRankCount('C');
     const notDone = this.getStatusCount('NotYetDone');
     const onProcess = this.getStatusCount('OnProcess');
     const done = this.getStatusCount('Done');
     const total = this.getTotalCount();
 
     this.overviewChart = new Chart(ctx, {
-      type: 'bar',
+      type: 'pie',
       data: {
-        labels: ['Rank A (สูง)', 'Rank B (ปานกลาง)', 'Rank C (ทั่วไป)', 'ยังไม่ดำเนินการ', 'กำลังดำเนินการ', 'เสร็จสิ้น'],
+        labels: ['ยังไม่ดำเนินการ', 'กำลังดำเนินการ', 'เสร็จสิ้น', 'รวมทั้งหมด'],
         datasets: [
           {
             label: 'จำนวนรายการ',
-            data: [rankA, rankB, rankC, notDone, onProcess, done],
+            data: [notDone, onProcess, done, total],
             backgroundColor: [
-              'rgba(220, 53, 69, 0.8)',   // Rank A - Red
-              'rgba(255, 193, 7, 0.8)',   // Rank B - Yellow
-              'rgba(25, 135, 84, 0.8)',  // Rank C - Green
-              'rgba(108, 117, 125, 0.8)', // Not Done - Gray
-              'rgba(13, 110, 253, 0.8)',  // On Process - Blue
-              'rgba(25, 135, 84, 0.8)'    // Done - Green
+              'rgba(220, 53, 69, 0.8)',   // ยังไม่ดำเนินการ - แดง
+              'rgba(255, 193, 7, 0.8)',   // กำลังดำเนินการ - เหลือง
+              'rgba(25, 135, 84, 0.8)',   // เสร็จสิ้น - เขียว
+              'rgba(13, 110, 253, 0.8)'   // รวมทั้งหมด - ฟ้า
             ],
             borderColor: [
               'rgb(220, 53, 69)',
               'rgb(255, 193, 7)',
               'rgb(25, 135, 84)',
-              'rgb(108, 117, 125)',
-              'rgb(13, 110, 253)',
-              'rgb(25, 135, 84)'
+              'rgb(13, 110, 253)'
             ],
-            borderWidth: 2,
-            borderRadius: 8
+            borderWidth: 2
           }
         ]
       },
@@ -117,47 +110,47 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          title: {
-            display: true,
-            text: `ภาพรวมทั้งหมด: ${total} รายการ`,
-            font: {
-              size: 16,
-              weight: 'bold'
-            },
-            padding: {
-              top: 10,
-              bottom: 20
-            }
-          },
           legend: {
-            display: false
+            display: true,
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              font: {
+                size: 12
+              },
+              generateLabels: (chart: any) => {
+                const data = chart.data;
+                if (data.labels.length && data.datasets.length) {
+                  return data.labels.map((label: string, i: number) => {
+                    const value = data.datasets[0].data[i];
+                    const total = data.datasets[0].data[3]; 
+                    const percentage = i < 3 && total > 0 ? ((value / total) * 100).toFixed(1) : '';
+                    return {
+                      text: `${label}: ${value} ${percentage ? `(${percentage}%)` : ''}`,
+                      fillStyle: data.datasets[0].backgroundColor[i],
+                      strokeStyle: data.datasets[0].borderColor[i],
+                      lineWidth: data.datasets[0].borderWidth,
+                      hidden: false,
+                      index: i
+                    };
+                  });
+                }
+                return [];
+              }
+            }
           },
           tooltip: {
             callbacks: {
               label: (context: any) => {
-                const value = context.parsed.y || 0;
-                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                return `จำนวน: ${value} รายการ (${percentage}%)`;
+                const label = context.label || '';
+                const value = context.parsed || 0;
+                const total = context.dataset.data[3]; 
+                if (context.dataIndex < 3) {
+                  const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                  return `${label}: ${value} รายการ (${percentage}%)`;
+                }
+                return `${label}: ${value} ไซต์`;
               }
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 1,
-              precision: 0
-            },
-            title: {
-              display: true,
-              text: 'จำนวนรายการ'
-            }
-          },
-          x: {
-            ticks: {
-              maxRotation: 45,
-              minRotation: 45
             }
           }
         }
@@ -205,10 +198,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     if (this.searchQuery.trim()) {
       const query = this.searchQuery.toLowerCase();
       filtered = filtered.filter(r => 
-        r.area?.toLowerCase().includes(query) ||
-        r.detail?.toLowerCase().includes(query) ||
-        r.responsiblePerson?.toLowerCase().includes(query) ||
-        r.category?.toLowerCase().includes(query)
+        r.area?.toLowerCase().includes(query)
       );
     }
 
@@ -277,6 +267,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     return name.charAt(0).toUpperCase();
   }
 
+  viewDetails(id: number) {
+    this.router.navigate(['/edit', id]);
+  }
+
   exportChartToPDF() {
     if (!this.overviewChart) {
       this.alertService.toastError('กรุณารอให้ Chart โหลดเสร็จก่อน');
@@ -304,7 +298,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       });
       pdf.text(`วันที่: ${currentDate}`, pdfWidth / 2, 22, { align: 'center' });
       
-      const imgWidth = pdfWidth - 40; // Margin 20mm each side
+      const imgWidth = pdfWidth - 40; 
       const imgHeight = (this.overviewChartRef.nativeElement.height / this.overviewChartRef.nativeElement.width) * imgWidth;
       
       const yPosition = 30;

@@ -19,19 +19,16 @@ namespace SafetyPortal.API.Controllers
         }
 
         [HttpPost("login")]
-        [AllowAnonymous] // อนุญาตให้ทุกคนเข้าถึงได้ (แม้ไม่มี Token)
+        [AllowAnonymous] 
         public IActionResult Login([FromBody] LoginDto request)
         {
-            // --- ส่วนตรวจสอบ User/Pass ---
-            // ในระยะนี้ใช้ Hardcode: admin / password123 ไปก่อน
-            // ถ้าจะเชื่อม Database ค่อยมาแก้ตรงนี้ครับ
-            if (request.Username == "admin" && request.Password == "123")
+            if (request.Code == "1234")
             {
-                var token = GenerateJwtToken(request.Username);
+                var token = GenerateJwtToken("inspector");
                 return Ok(new { token });
             }
 
-            return Unauthorized("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+            return Unauthorized("รหัสไม่ถูกต้อง");
         }
 
         private string GenerateJwtToken(string username)
@@ -39,7 +36,6 @@ namespace SafetyPortal.API.Controllers
             var jwtSettings = _configuration.GetSection("JwtSettings");
             var keyString = jwtSettings["Key"];
             
-            // ป้องกันกรณีลืมใส่ Key ใน appsettings
             if (string.IsNullOrEmpty(keyString))
             {
                 throw new Exception("JwtSettings:Key is missing in appsettings.json");
@@ -58,7 +54,7 @@ namespace SafetyPortal.API.Controllers
                 issuer: jwtSettings["Issuer"],
                 audience: jwtSettings["Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(24), // ใช้ UtcNow เสมอ
+                expires: DateTime.UtcNow.AddHours(24), 
                 signingCredentials: creds
             );
 
@@ -68,7 +64,6 @@ namespace SafetyPortal.API.Controllers
 
     public class LoginDto
     {
-        public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        public string Code { get; set; } = string.Empty; // รหัส 4 ตัว
     }
 }
