@@ -12,7 +12,6 @@
               </div>
               <div>
                 <h4 class="mb-0 fw-bold">แจ้งปัญหาความปลอดภัย</h4>
-                <p class="mb-0 small opacity-90">กรุณากรอกข้อมูลให้ครบถ้วนเพื่อการดำเนินการที่รวดเร็ว</p>
           </div>
             </div>
           </div>
@@ -29,7 +28,7 @@
                 <!-- Area Input -->
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold mb-2">
-                    <i class="bi bi-geo-alt me-2 text-primary"></i>พื้นที่ที่พบปัญหา
+                    <i class="me-2 text-primary"></i>พื้นที่ที่พบปัญหา
                     <span class="text-danger">*</span>
                   </label>
                   <input 
@@ -40,15 +39,12 @@
                     required 
                     placeholder="เช่น ไลน์ผลิต A, โรงอาหาร, ห้องเครื่อง"
                     [class.is-invalid]="reportForm.submitted && !formData.area.trim()">
-                  <div class="form-text">
-                    <i class="bi bi-info-circle me-1"></i>ระบุตำแหน่งที่พบปัญหาอย่างชัดเจน
-                  </div>
                 </div>
 
                 <!-- Report Date -->
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold mb-2">
-                    <i class="bi bi-calendar me-2 text-primary"></i>วัน/เดือน/ปี
+                    <i class="me-2 text-primary"></i>วัน/เดือน/ปี
                     <span class="text-danger">*</span>
                   </label>
                   <input 
@@ -57,9 +53,6 @@
                     [(ngModel)]="formData.reportDate" 
                     name="reportDate" 
                     required>
-                  <div class="form-text">
-                    <i class="bi bi-info-circle me-1"></i>เลือกวันที่พบปัญหา
-                  </div>
                 </div>
               </div>
 
@@ -67,7 +60,7 @@
               <div class="row g-4 mb-4">
                 <div class="col-12">
                   <label class="form-label fw-bold mb-2">
-                    <i class="bi bi-image me-2 text-primary"></i>รูปภาพ (Before)
+                    <i class="me-2 text-primary"></i>Before
                   </label>
                   <div class="image-upload-wrapper">
                     <input 
@@ -102,7 +95,7 @@
               <!-- Detail Section -->
               <div class="mb-4">
                 <label class="form-label fw-bold mb-2">
-                  <i class="bi bi-file-text me-2 text-primary"></i>รายละเอียดปัญหา
+                  <i class="me-2 text-primary"></i>รายละเอียดปัญหา
                   <span class="text-danger">*</span>
                 </label>
                 <div class="textarea-wrapper position-relative">
@@ -112,7 +105,6 @@
                     [(ngModel)]="formData.detail" 
                     name="detail" 
                     required 
-                    placeholder="อธิบายปัญหาที่พบอย่างละเอียด..."
                     [class.is-invalid]="reportForm.submitted && !formData.detail.trim()"></textarea>
                   <button 
                     type="button" 
@@ -125,14 +117,6 @@
                     <i *ngIf="isListening" class="bi bi-mic-fill"></i>
                     <span *ngIf="isListening" class="spinner-border spinner-border-sm ms-1"></span>
                   </button>
-                </div>
-                <div class="mt-2">
-                  <small class="text-muted">
-                    <i class="bi bi-info-circle me-1"></i>กรุณากรอกรายละเอียดปัญหาอย่างชัดเจน
-                    <span class="ms-2">
-                      <i class="bi bi-mic me-1"></i>หรือใช้ปุ่มเสียงเพื่อพูดแทนการพิมพ์
-                    </span>
-                  </small>
                 </div>
                 <!-- AI Button - Commented out for now -->
                 <!--
@@ -159,7 +143,7 @@
               <!-- Suggestion Section -->
               <div class="mb-4">
                 <label class="form-label fw-bold mb-2">
-                  <i class="bi bi-lightbulb me-2 text-warning"></i>ข้อแนะนำในการแก้ไขปัญหา
+                  <i class="me-2 text-warning"></i>ข้อแนะนำในการแก้ไขปัญหา
                 </label>
                 <div class="textarea-wrapper position-relative">
                   <textarea 
@@ -167,7 +151,7 @@
                     rows="3" 
                     [(ngModel)]="formData.suggestion" 
                     name="suggestion" 
-                    placeholder="แนะนำวิธีการแก้ไขปัญหา..."></textarea>
+                   ></textarea>
                   <button 
                     type="button" 
                     class="btn btn-sm voice-input-btn"
@@ -180,11 +164,6 @@
                     <span *ngIf="isListeningSuggestion" class="spinner-border spinner-border-sm ms-1"></span>
                   </button>
                 </div>
-                <div class="mt-2">
-                  <small class="text-muted">
-                    <i class="bi bi-info-circle me-1"></i>หรือใช้ปุ่มเสียงเพื่อพูดแทนการพิมพ์
-                  </small>
-                </div>
               </div>
 
               <!-- Divider -->
@@ -194,7 +173,7 @@
               <div class="row g-4 mb-4">
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold mb-2">
-                    <i class="bi bi-shield-exclamation me-2 text-primary"></i>Stop6
+                    <i class="me-2 text-primary"></i>Stop
                     <span class="text-danger">*</span>
                   </label>
                   <select 
@@ -213,7 +192,7 @@
 
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold mb-2">
-                    <i class="bi bi-exclamation-triangle me-2 text-primary"></i>Rank ความเร่งด่วน
+                    <i class="me-2 text-primary"></i>Rank
                     <span class="text-danger">*</span>
                   </label>
                   <select 
@@ -225,7 +204,7 @@
                     <option value="B">B - เร่งด่วน</option>
                     <option value="C">C - ปานกลาง</option>
                   </select>
-                  <div class="form-text mt-1">
+                  <div class="form-text mt-3 text-center">
                     <span class="badge" [ngClass]="{
                       'bg-danger': formData.rank === 'A',
                       'bg-warning text-dark': formData.rank === 'B',
@@ -238,7 +217,7 @@
 
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold mb-2">
-                    <i class="bi bi-flag me-2 text-primary"></i>สถานะการดำเนินการ
+                    <i class="me-2 text-primary"></i>สถานะการดำเนินการ
                     <span class="text-danger">*</span>
                   </label>
                   <select 
@@ -254,7 +233,7 @@
 
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold mb-2">
-                    <i class="bi bi-person me-2 text-primary"></i>ผู้รับผิดชอบ
+                    <i class="me-2 text-primary"></i>ผู้รับผิดชอบ
                   </label>
                   <input 
                     type="text" 

@@ -5,6 +5,7 @@ using SafetyPortal.API.Data;
 using SafetyPortal.API.Models;
 using SafetyPortal.API.DTOs; 
 using SafetyPortal.API.Enums;
+using System.IO;
 
 namespace SafetyPortal.API.Controllers
 {
@@ -22,14 +23,69 @@ namespace SafetyPortal.API.Controllers
             _environment = environment;
         }
 
-        // 1. GET: ดึงข้อมูลทั้งหมด
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SafetyReports>>> GetSafetyReports()
         {
             return await _context.SafetyReports.OrderByDescending(r => r.CreatedAt).ToListAsync();
         }
 
-        // 2. GET: ดึงตาม ID
+        [HttpGet("images/{*imagePath}")]
+        [AllowAnonymous]
+        public IActionResult GetImage(string imagePath)
+        {
+            try
+            {
+                string webRootPath = _environment.WebRootPath;
+                if (string.IsNullOrWhiteSpace(webRootPath))
+                {
+                    webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                }
+
+                if (!imagePath.StartsWith("uploads/"))
+                {
+                    imagePath = "uploads/" + imagePath;
+                }
+
+                string fullPath = Path.Combine(webRootPath, imagePath);
+
+                if (!fullPath.StartsWith(webRootPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    return BadRequest("Invalid image path");
+                }
+
+                if (!System.IO.File.Exists(fullPath))
+                {
+                    return NotFound("Image not found");
+                }
+
+                string contentType = "image/jpeg";
+                string extension = Path.GetExtension(fullPath).ToLowerInvariant();
+                switch (extension)
+                {
+                    case ".png":
+                        contentType = "image/png";
+                        break;
+                    case ".gif":
+                        contentType = "image/gif";
+                        break;
+                    case ".jpg":
+                    case ".jpeg":
+                        contentType = "image/jpeg";
+                        break;
+                    case ".webp":
+                        contentType = "image/webp";
+                        break;
+                }
+
+                var fileBytes = System.IO.File.ReadAllBytes(fullPath);
+                return File(fileBytes, contentType);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error loading image: {ex.Message}");
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<SafetyReports>> GetSafetyReport(int id)
         {
@@ -38,7 +94,6 @@ namespace SafetyPortal.API.Controllers
             return safetyReport;
         }
 
-        // 3. POST: สร้างรายการใหม่ (รับ DTO + ไฟล์รูป)
         [HttpPost]
         public async Task<ActionResult<SafetyReports>> PostSafetyReport([FromForm] CreateReportDto dto)
         {
@@ -69,14 +124,12 @@ namespace SafetyPortal.API.Controllers
             return CreatedAtAction("GetSafetyReport", new { id = safetyReport.Id }, safetyReport);
         }
 
-        // 4. PUT: อัปเดตงาน
         [HttpPut("{id}")]
         public async Task<IActionResult> PutSafetyReport(int id, [FromForm] UpdateReportDto dto)
         {
             var safetyReport = await _context.SafetyReports.FindAsync(id);
             if (safetyReport == null) return NotFound();
 
-            // อัปเดต fields ที่ส่งมา
             if (!string.IsNullOrEmpty(dto.Area))
                 safetyReport.Area = dto.Area;
             
@@ -104,7 +157,6 @@ namespace SafetyPortal.API.Controllers
             if (dto.Status.HasValue)
                 safetyReport.Status = dto.Status.Value;
 
-            // อัปเดตรูปภาพ
             if (dto.ImageBefore != null)
             {
                 safetyReport.ImageBeforeUrl = await SaveImage(dto.ImageBefore);
@@ -115,7 +167,7 @@ namespace SafetyPortal.API.Controllers
                 safetyReport.ImageAfterUrl = await SaveImage(dto.ImageAfter);
                 if (safetyReport.Status == ReportStatus.NotYetDone || safetyReport.Status == ReportStatus.OnProcess)
                 {
-                    safetyReport.Status = ReportStatus.Done; // ถ้ามีรูป After ถือว่าเสร็จ
+                    safetyReport.Status = ReportStatus.Done;
                 }
             }
 
@@ -125,7 +177,6 @@ namespace SafetyPortal.API.Controllers
             return NoContent();
         }
 
-        // 5. DELETE: ลบงาน
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSafetyReport(int id)
         {
@@ -138,10 +189,9 @@ namespace SafetyPortal.API.Controllers
             return NoContent();
         }
 
-        // --- Helper Function: SaveImage (มีตัวเดียวเท่านั้น) ---
+
         private async Task<string> SaveImage(IFormFile imageFile)
         {
-            // 1. หา path ของ wwwroot ที่ถูกต้อง
             string webRootPath = _environment.WebRootPath;
             if (string.IsNullOrWhiteSpace(webRootPath))
             {

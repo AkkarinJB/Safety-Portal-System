@@ -257,9 +257,17 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   getImageUrl(url: string | null | undefined): string {
     if (!url) return '';
-    if (url.startsWith('http')) return url;
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    return `${baseUrl}/${url}`;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    
+    const baseUrl = environment.apiUrl;
+    
+    let cleanUrl = url.startsWith('/') ? url.substring(1) : url;
+    
+    if (cleanUrl.startsWith('uploads/')) {
+      cleanUrl = cleanUrl.substring('uploads/'.length);
+    }
+    
+    return `${baseUrl}/SafetyReports/images/${cleanUrl}`;
   }
 
   getInitials(name: string | null | undefined): string {

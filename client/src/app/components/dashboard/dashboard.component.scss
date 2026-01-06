@@ -1,14 +1,52 @@
 .dashboard-container {
   padding: 2rem 0;
   min-height: calc(100vh - 200px);
+  background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
 }
 
 .dashboard-header {
+  .header-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+    
+    i {
+      font-size: 1.5rem;
+      color: #fff;
+    }
+  }
+  
   .dashboard-title {
     font-size: 2rem;
     font-weight: 700;
     color: #1a1a1a;
     letter-spacing: -0.5px;
+    margin: 0;
+  }
+  
+  .dashboard-subtitle {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 400;
+  }
+  
+  .professional-btn {
+    transition: all 0.3s ease;
+    font-weight: 500;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(13, 110, 253, 0.3) !important;
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
   }
 }
 
@@ -163,12 +201,35 @@
   }
 }
 
-// Filter Section
-.card {
-  transition: box-shadow 0.3s ease;
+.professional-card {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
   
   &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+    transform: translateY(-2px);
+  }
+  
+  .card-header {
+    &.bg-gradient-primary {
+      background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    }
+    
+    .chart-icon-wrapper,
+    .table-icon-wrapper {
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      i {
+        font-size: 1.25rem;
+        color: #fff;
+      }
+    }
   }
 }
 
@@ -197,20 +258,23 @@
       letter-spacing: 0.5px;
       color: #6c757d;
       border-bottom: 2px solid #dee2e6;
-      padding: 1rem;
+      padding: 1.25rem 1rem;
+      background: #f8f9fa;
     }
   }
 
   tbody {
     tr {
-      transition: background-color 0.2s ease;
+      transition: all 0.2s ease;
 
       &.table-row-hover:hover {
         background-color: #f8f9fa;
+        transform: scale(1.01);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
       }
 
       td {
-        padding: 1rem;
+        padding: 1.25rem 1rem;
         vertical-align: middle;
         border-bottom: 1px solid #f0f0f0;
       }
@@ -242,12 +306,16 @@
   padding: 0.5rem 0.75rem;
   font-size: 0.75rem;
   letter-spacing: 0.5px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .status-badge {
   font-weight: 500;
   padding: 0.5rem 0.75rem;
   font-size: 0.75rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 // Avatar
@@ -369,14 +437,23 @@
 
 // Button Hover Effects
 .btn {
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  font-weight: 500;
 
   &:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
   }
 
   &:active {
     transform: translateY(0);
+  }
+  
+  &.professional-btn {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    
+    &:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
   }
 }
 

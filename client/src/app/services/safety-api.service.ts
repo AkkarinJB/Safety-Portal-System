@@ -30,11 +30,27 @@ export class SafetyApiService {
 
   getReportById(id: number): Observable<SafetyReport> {
     return this.http.get<SafetyReport>(`${this.apiUrl}/SafetyReports/${id}`).pipe(
-      map(report => ({
-        ...report,
-        rank: { 0: 'A', 1: 'B', 2: 'C' }[Number(report.rank)] || String(report.rank),
-        stop6: report.stop6 || 6 
-      }))
+      map(report => {
+        let rankValue = report.rank;
+        if (typeof report.rank === 'number') {
+          rankValue = { 0: 'A', 1: 'B', 2: 'C' }[report.rank] || String(report.rank);
+        }
+        
+        let stop6Value = report.stop6;
+        if (typeof report.stop6 === 'string') {
+          const parsed = parseInt(report.stop6);
+          stop6Value = isNaN(parsed) ? report.stop6 : parsed;
+        } else if (!report.stop6) {
+          stop6Value = 6;
+        }
+        
+        return {
+          ...report,
+          rank: rankValue,
+          stop6: stop6Value,
+          category: report.category || ''
+        };
+      })
     );
   }
 

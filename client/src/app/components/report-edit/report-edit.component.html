@@ -78,16 +78,31 @@
                     required></textarea>
                 </div>
 
+                <!-- Category -->
+                <div class="mb-3">
+                  <label class="form-label fw-bold">
+                    <i class="bi bi-tag me-2 text-primary"></i>หมวดหมู่
+                  </label>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    [(ngModel)]="formData.category" 
+                    name="category"
+                    placeholder="เช่น อุปกรณ์, สารเคมี">
+                </div>
+
                 <!-- Stop6, Rank, Status -->
                 <div class="row g-3 mb-3">
                   <div class="col-12 col-md-4">
                     <label class="form-label fw-bold">
                       <i class="bi bi-shield-exclamation me-2 text-primary"></i>Stop6
+                      <span class="text-danger">*</span>
                     </label>
                     <select 
                       class="form-select" 
                       [(ngModel)]="formData.stop6" 
-                      name="stop6">
+                      name="stop6"
+                      required>
                       <option [value]="1">1. อันตรายจากเครื่องจักร</option>
                       <option [value]="2">2. อันตรายจากวัตถุหนักตกใส่</option>
                       <option [value]="3">3. อันตรายจากยานพาหนะ</option>
@@ -99,11 +114,13 @@
                   <div class="col-12 col-md-4">
                     <label class="form-label fw-bold">
                       <i class="bi bi-exclamation-triangle me-2 text-primary"></i>Rank
+                      <span class="text-danger">*</span>
                     </label>
                     <select 
                       class="form-select" 
                       [(ngModel)]="formData.rank" 
-                      name="rank">
+                      name="rank"
+                      required>
                       <option value="A">A - เร่งด่วนมาก</option>
                       <option value="B">B - เร่งด่วน</option>
                       <option value="C">C - ปานกลาง</option>
@@ -112,11 +129,13 @@
                   <div class="col-12 col-md-4">
                     <label class="form-label fw-bold">
                       <i class="bi bi-flag me-2 text-primary"></i>สถานะ
+                      <span class="text-danger">*</span>
                     </label>
                     <select 
                       class="form-select" 
                       [(ngModel)]="formData.status" 
-                      name="status">
+                      name="status"
+                      required>
                       <option value="NotYetDone">ยังไม่ดำเนินการ</option>
                       <option value="OnProcess">กำลังดำเนินการ</option>
                       <option value="Done">เสร็จสิ้น</option>
@@ -163,19 +182,61 @@
                   <label class="form-label fw-bold mb-2 text-muted">
                     <i class="bi bi-camera me-2"></i>รูปก่อนทำ (Before)
                   </label>
-                  <div class="image-container">
+                  
+                  <!-- File Upload -->
+                  <div class="image-upload-wrapper mb-3">
+                    <input 
+                      type="file" 
+                      class="form-control" 
+                      (change)="onFileSelected($event, 'before')" 
+                      accept="image/*"
+                      id="beforeImageUpload">
+                    <label for="beforeImageUpload" class="upload-label">
+                      <i class="bi bi-cloud-upload me-2"></i>
+                      <span *ngIf="!fileNameBefore">อัปโหลดรูปภาพใหม่</span>
+                      <span *ngIf="fileNameBefore" class="text-success">{{ fileNameBefore }}</span>
+                    </label>
+                  </div>
+
+                  <!-- New Image Preview -->
+                  <div *ngIf="imageBeforePreview && selectedFileBefore" class="image-preview-card mb-3">
+                    <div class="position-relative">
+                      <div class="ratio ratio-4x3 rounded-3 overflow-hidden">
+                        <img [src]="imageBeforePreview" class="object-fit-cover" alt="Before Preview">
+                      </div>
+                      <button 
+                        type="button" 
+                        class="btn btn-sm btn-danger remove-image-btn"
+                        (click)="removeImage('before')"
+                        title="ลบรูปภาพ">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                      <div class="preview-badge">
+                        <i class="bi bi-check-circle me-1"></i>รูปใหม่ที่จะบันทึก
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Current Image -->
+                  <div *ngIf="imageBeforePreview && !selectedFileBefore" class="image-container">
                     <div class="ratio ratio-4x3 rounded-3 overflow-hidden bg-light shadow-sm">
                       <img 
-                        *ngIf="report.imageBeforeUrl" 
-                        [src]="getImageUrl(report.imageBeforeUrl)" 
+                        [src]="imageBeforePreview" 
                         class="object-fit-cover" 
                         alt="Before">
-                      <div 
-                        *ngIf="!report.imageBeforeUrl" 
-                        class="d-flex flex-column align-items-center justify-content-center text-muted h-100">
-                        <i class="bi bi-image display-6 mb-2"></i>
-                        <small>ไม่มีรูปภาพ</small>
-                      </div>
+                    </div>
+                    <div class="text-center mt-2">
+                      <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>รูปปัจจุบัน
+                      </small>
+                    </div>
+                  </div>
+
+                  <!-- No Image State -->
+                  <div *ngIf="!imageBeforePreview" class="no-image-placeholder">
+                    <div class="ratio ratio-4x3 rounded-3 bg-light d-flex flex-column align-items-center justify-content-center text-muted">
+                      <i class="bi bi-image display-6 mb-2"></i>
+                      <small>ยังไม่มีรูปภาพ</small>
                     </div>
                   </div>
                 </div>

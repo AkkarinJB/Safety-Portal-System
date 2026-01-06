@@ -58,28 +58,55 @@ export class ReportEditComponent implements OnInit {
     this.api.getReportById(id).subscribe({
       next: (data) => {
         this.report = data;
+        
+        // Handle stop6 - convert string to number if needed
+        let stop6Value = 6;
+        if (data.stop6) {
+          if (typeof data.stop6 === 'string') {
+            // Map Thai string to number
+            const stop6Map: { [key: string]: number } = {
+              'อันตรายจากเครื่องจักร': 1,
+              'อันตรายจากวัตถุหนักตกใส่': 2,
+              'อันตรายจากยานพาหนะ': 3,
+              'อันตรายจากการตกจากที่สูง': 4,
+              'อันตรายจากกระแสไฟฟ้า': 5,
+              'อื่นๆ': 6
+            };
+            stop6Value = stop6Map[data.stop6] || parseInt(data.stop6) || 6;
+          } else {
+            stop6Value = Number(data.stop6) || 6;
+          }
+        }
+        
         this.formData = {
           area: data.area || '',
-          reportDate: data.reportDate ? data.reportDate.split('T')[0] : new Date().toISOString().split('T')[0],
+          reportDate: data.reportDate ? (data.reportDate.split('T')[0] || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
           detail: data.detail || '',
           category: data.category || '',
-          stop6: data.stop6 || 6,
+          stop6: stop6Value,
           rank: data.rank || 'C',
           suggestion: data.suggestion || '',
           responsiblePerson: data.responsiblePerson || '',
           status: data.status || 'NotYetDone'
         };
         
+        // Set image previews
         if (data.imageBeforeUrl) {
           this.imageBeforePreview = this.getImageUrl(data.imageBeforeUrl);
+        } else {
+          this.imageBeforePreview = null;
         }
+        
         if (data.imageAfterUrl) {
           this.imageAfterPreview = this.getImageUrl(data.imageAfterUrl);
+        } else {
+          this.imageAfterPreview = null;
         }
         
         this.isLoading = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('Error loading report:', err);
         this.isLoading = false;
         this.alertService.error('ไม่พบข้อมูล', 'ไม่สามารถโหลดข้อมูลรายงานได้');
       }
@@ -194,8 +221,16 @@ export class ReportEditComponent implements OnInit {
 
   getImageUrl(url: string | null | undefined): string {
     if (!url) return '';
-    if (url.startsWith('http')) return url;
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    return `${baseUrl}/${url}`;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    
+    const baseUrl = environment.apiUrl;
+    
+    let cleanUrl = url.startsWith('/') ? url.substring(1) : url;
+    
+    if (cleanUrl.startsWith('uploads/')) {
+      cleanUrl = cleanUrl.substring('uploads/'.length);
+    }
+    
+    return `${baseUrl}/SafetyReports/images/${cleanUrl}`;
   }
 }
