@@ -282,22 +282,102 @@
   }
 }
 
-// Report Image
-.report-image {
-  width: 80px;
+// Report Images Container
+.report-images-container {
+  min-width: 120px;
   
-  img {
-    transition: transform 0.3s ease;
-  }
-
-  &:hover img {
-    transform: scale(1.05);
+  .report-image-item {
+    position: relative;
+    margin-bottom: 0.5rem;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    .image-label-badge {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: linear-gradient(135deg, rgba(13, 110, 253, 0.95) 0%, rgba(10, 88, 202, 0.95) 100%);
+      color: white;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      z-index: 10;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      
+      &.after-badge {
+        background: linear-gradient(135deg, rgba(25, 135, 84, 0.95) 0%, rgba(20, 108, 67, 0.95) 100%);
+      }
+    }
+    
+    .ratio {
+      border: 2px solid rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      
+      &:hover {
+        border-color: rgba(13, 110, 253, 0.3);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+      
+      img {
+        transition: transform 0.3s ease;
+      }
+      
+      &:hover img {
+        transform: scale(1.08);
+      }
+    }
   }
 }
 
-.report-image-mobile {
-  width: 80px;
+.report-images-mobile {
+  width: 110px;
   flex-shrink: 0;
+  
+  .report-image-mobile-item {
+    position: relative;
+    margin-bottom: 0.75rem;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    .image-label-badge-mobile {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: linear-gradient(135deg, rgba(13, 110, 253, 0.95) 0%, rgba(10, 88, 202, 0.95) 100%);
+      color: white;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      z-index: 10;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      
+      &.after-badge-mobile {
+        background: linear-gradient(135deg, rgba(25, 135, 84, 0.95) 0%, rgba(20, 108, 67, 0.95) 100%);
+      }
+    }
+    
+    .ratio {
+      border: 2px solid rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      
+      &:hover {
+        border-color: rgba(13, 110, 253, 0.3);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+    }
+  }
 }
 
 // Badges

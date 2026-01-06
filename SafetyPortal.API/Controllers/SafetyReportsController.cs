@@ -103,18 +103,66 @@ namespace SafetyPortal.API.Controllers
                 imagePath = await SaveImage(dto.ImageBefore);
             }
 
+            // Parse Status from FormData (FormData sends as string)
+            ReportStatus status = ReportStatus.NotYetDone;
+            if (Request.Form.ContainsKey("status"))
+            {
+                string statusString = Request.Form["status"].ToString();
+                if (Enum.TryParse<ReportStatus>(statusString, true, out ReportStatus parsedStatus))
+                {
+                    status = parsedStatus;
+                }
+            }
+            else if (dto.Status.HasValue)
+            {
+                status = dto.Status.Value;
+            }
+
+            // Parse Rank from FormData
+            RiskRank rank = RiskRank.C;
+            if (Request.Form.ContainsKey("rank"))
+            {
+                string rankString = Request.Form["rank"].ToString();
+                if (Enum.TryParse<RiskRank>(rankString, true, out RiskRank parsedRank))
+                {
+                    rank = parsedRank;
+                }
+            }
+            else if (dto.Rank.HasValue)
+            {
+                rank = dto.Rank.Value;
+            }
+
+            // Parse Stop6 from FormData
+            Stop6 stop6 = Stop6.Other;
+            if (Request.Form.ContainsKey("stop6"))
+            {
+                string stop6String = Request.Form["stop6"].ToString();
+                if (int.TryParse(stop6String, out int stop6Int))
+                {
+                    if (Enum.IsDefined(typeof(Stop6), stop6Int))
+                    {
+                        stop6 = (Stop6)stop6Int;
+                    }
+                }
+            }
+            else if (dto.Stop6.HasValue)
+            {
+                stop6 = dto.Stop6.Value;
+            }
+
             var safetyReport = new SafetyReports
             {
                 Area = dto.Area,
                 ReportDate = dto.ReportDate,
                 Detail = dto.Detail,
                 Category = dto.Category,
-                Stop6 = dto.Stop6,
-                Rank = dto.Rank,
+                Stop6 = stop6,
+                Rank = rank,
                 Suggestion = dto.Suggestion,
                 ResponsiblePerson = dto.ResponsiblePerson,
                 ImageBeforeUrl = imagePath,
-                Status = dto.Status,
+                Status = status,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -142,11 +190,36 @@ namespace SafetyPortal.API.Controllers
             if (!string.IsNullOrEmpty(dto.Category))
                 safetyReport.Category = dto.Category;
             
+            // Parse Stop6 from string if needed
             if (dto.Stop6.HasValue)
+            {
                 safetyReport.Stop6 = dto.Stop6.Value;
+            }
+            else if (Request.Form.ContainsKey("stop6"))
+            {
+                string stop6String = Request.Form["stop6"].ToString();
+                if (int.TryParse(stop6String, out int stop6Int))
+                {
+                    if (Enum.IsDefined(typeof(Stop6), stop6Int))
+                    {
+                        safetyReport.Stop6 = (Stop6)stop6Int;
+                    }
+                }
+            }
             
+            // Parse Rank from string if needed
             if (dto.Rank.HasValue)
+            {
                 safetyReport.Rank = dto.Rank.Value;
+            }
+            else if (Request.Form.ContainsKey("rank"))
+            {
+                string rankString = Request.Form["rank"].ToString();
+                if (Enum.TryParse<RiskRank>(rankString, true, out RiskRank parsedRank))
+                {
+                    safetyReport.Rank = parsedRank;
+                }
+            }
             
             if (!string.IsNullOrEmpty(dto.Suggestion))
                 safetyReport.Suggestion = dto.Suggestion;
@@ -154,8 +227,19 @@ namespace SafetyPortal.API.Controllers
             if (!string.IsNullOrEmpty(dto.ResponsiblePerson))
                 safetyReport.ResponsiblePerson = dto.ResponsiblePerson;
             
+            // Parse Status from string if needed
             if (dto.Status.HasValue)
+            {
                 safetyReport.Status = dto.Status.Value;
+            }
+            else if (Request.Form.ContainsKey("status"))
+            {
+                string statusString = Request.Form["status"].ToString();
+                if (Enum.TryParse<ReportStatus>(statusString, true, out ReportStatus parsedStatus))
+                {
+                    safetyReport.Status = parsedStatus;
+                }
+            }
 
             if (dto.ImageBefore != null)
             {
@@ -198,16 +282,13 @@ namespace SafetyPortal.API.Controllers
                 webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             }
 
-            // 2. ระบุโฟลเดอร์ uploads (แค่ชั้นเดียวพอ)
             string uploadsFolder = Path.Combine(webRootPath, "uploads");
 
-            // 3. ถ้าไม่มี ให้สร้าง
             if (!Directory.Exists(uploadsFolder))
             {
                 Directory.CreateDirectory(uploadsFolder);
             }
 
-            // 4. ตั้งชื่อไฟล์และบันทึก
             string uniqueFileName = Guid.NewGuid().ToString() + "_" + imageFile.FileName;
             string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
@@ -216,7 +297,6 @@ namespace SafetyPortal.API.Controllers
                 await imageFile.CopyToAsync(fileStream);
             }
 
-            // 5. Return path
             return "uploads/" + uniqueFileName;
         }
     }

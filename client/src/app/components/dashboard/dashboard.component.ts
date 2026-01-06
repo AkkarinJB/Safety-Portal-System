@@ -275,6 +275,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     return name.charAt(0).toUpperCase();
   }
 
+  getDisplayNumber(index: number): number {
+    return index + 1;
+  }
+
   viewDetails(id: number) {
     this.router.navigate(['/edit', id]);
   }
