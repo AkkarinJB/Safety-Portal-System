@@ -169,7 +169,14 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   getStatusCount(status: string): number {
     if (!this.reports) return 0;
-    return this.reports.filter(r => r.status === status).length;
+    // Handle both string and number status
+    return this.reports.filter(r => {
+      const reportStatus = String(r.status || '');
+      return reportStatus === status || 
+             (status === 'NotYetDone' && (reportStatus === '0' || reportStatus === '')) ||
+             (status === 'OnProcess' && reportStatus === '1') ||
+             (status === 'Done' && reportStatus === '2');
+    }).length;
   }
 
   getRecentCount(): number {
@@ -183,13 +190,31 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     }).length;
   }
 
-  getStatusLabel(status: string): string {
-    const statusMap: { [key: string]: string } = {
+  getStatusLabel(status: string | number | undefined): string {
+    if (!status && status !== 0) return 'ไม่ทราบสถานะ';
+    
+    // Handle number status (enum from backend: 0=NotYetDone, 1=OnProcess, 2=Done)
+    const statusNumberMap: { [key: number]: string } = {
+      0: 'ยังไม่ดำเนินการ',
+      1: 'กำลังดำเนินการ',
+      2: 'เสร็จสิ้น'
+    };
+    
+    if (typeof status === 'number') {
+      return statusNumberMap[status] || 'ไม่ทราบสถานะ';
+    }
+    
+    // Handle string status
+    const statusStringMap: { [key: string]: string } = {
       'NotYetDone': 'ยังไม่ดำเนินการ',
       'OnProcess': 'กำลังดำเนินการ',
-      'Done': 'เสร็จสิ้น'
+      'Done': 'เสร็จสิ้น',
+      '0': 'ยังไม่ดำเนินการ',
+      '1': 'กำลังดำเนินการ',
+      '2': 'เสร็จสิ้น'
     };
-    return statusMap[status] || status;
+    
+    return statusStringMap[String(status)] || String(status);
   }
 
   applyFilters() {
