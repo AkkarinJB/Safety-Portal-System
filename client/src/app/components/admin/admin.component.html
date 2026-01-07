@@ -114,7 +114,7 @@
         <button type="button" class="btn-close btn-close-white" (click)="closeCreateModal()"></button>
       </div>
       <div class="modal-body">
-        <form (ngSubmit)="onCreateSubmit()" #createForm="ngForm">
+        <form (ngSubmit)="onCreateSubmit()" #createFormRef="ngForm">
           <div class="mb-3">
             <label class="form-label fw-bold">ชื่อผู้ใช้ <span class="text-danger">*</span></label>
             <input 
@@ -184,7 +184,7 @@
         <button type="button" class="btn-close" (click)="closeEditModal()"></button>
       </div>
       <div class="modal-body">
-        <form (ngSubmit)="onEditSubmit()" #editForm="ngForm">
+        <form (ngSubmit)="onEditSubmit()" #editFormRef="ngForm">
           <div class="mb-3">
             <label class="form-label fw-bold">ชื่อผู้ใช้</label>
             <input 
