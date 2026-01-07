@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SafetyPortal.API.Data;
+using SafetyPortal.API.Repositories;
 using SafetyPortal.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer; 
 using Microsoft.IdentityModel.Tokens;              

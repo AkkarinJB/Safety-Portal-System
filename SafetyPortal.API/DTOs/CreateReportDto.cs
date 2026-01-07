@@ -42,7 +42,7 @@ namespace SafetyPortal.API.DTOs
                 if (Enum.IsDefined(typeof(Stop6), stop6Int))
                     return (Stop6)stop6Int;
             }
-            return Stop6.Other;
+            return Enums.Stop6.Other;
         }
 
         public RiskRank GetRank()
