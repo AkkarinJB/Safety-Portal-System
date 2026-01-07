@@ -44,7 +44,7 @@ export class AuthService {
     if (!role) return null;
     
     // Validate role
-    if (role === UserRole.Inspector || role === UserRole.Editor) {
+    if (role === UserRole.Inspector || role === UserRole.Editor || role === UserRole.SuperAdmin) {
       return role as UserRole;
     }
     return null;
