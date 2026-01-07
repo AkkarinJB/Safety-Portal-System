@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SafetyPortal.API.Attributes;
 using SafetyPortal.API.DTOs;
 using SafetyPortal.API.Enums;
 using SafetyPortal.API.Helpers;
