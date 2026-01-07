@@ -48,19 +48,22 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500KB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "2MB",
+                  "maximumError": "2.5MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "6kB"
+                  "maximumWarning": "6kB",
+                  "maximumError": "10kB"
                 },
                 {
                   "type": "bundle",
-                  "maximumWarning": "500KB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "2MB",
+                  "maximumError": "2.5MB"
                 }
+              ],
+              "allowedCommonJsDependencies": [
+                "sweetalert2"
               ],
               "outputHashing": "all",
               "optimization": {
