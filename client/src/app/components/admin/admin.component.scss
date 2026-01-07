@@ -1,10 +1,19 @@
 // ===== ADMIN COMPONENT STYLES =====
-// ใช้ Design Tokens จาก _design-tokens.scss
+// Mobile-First Design with Design Tokens
 
 .admin-container {
   min-height: calc(100vh - 200px);
   background: linear-gradient(135deg, var(--color-gray-50) 0%, var(--color-gray-200) 100%);
-  padding: var(--spacing-xl) 0;
+  padding: var(--spacing-md) 0;
+}
+
+// ===== GRADIENT UTILITIES =====
+.bg-gradient-primary {
+  background: var(--gradient-primary) !important;
+}
+
+.bg-gradient-warning {
+  background: var(--gradient-warning) !important;
 }
 
 .card-header {
@@ -20,15 +29,37 @@
   }
 }
 
+// ===== MOBILE CARD VIEW =====
+.user-card {
+  background: var(--color-bg-primary);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  transition: all var(--transition-slow);
+  
+  &:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+  
+  .card-body {
+    padding: var(--spacing-md);
+  }
+}
+
+// ===== DESKTOP TABLE VIEW =====
 .table {
   th {
     font-weight: var(--font-weight-semibold);
     color: var(--color-text-secondary);
     border-bottom: var(--border-width-medium) solid var(--color-border-dark);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-wide);
+    padding: var(--spacing-md);
   }
 
   td {
     vertical-align: middle;
+    padding: var(--spacing-md);
   }
 }
 
@@ -40,25 +71,151 @@
   }
 }
 
+// ===== MODAL STYLES =====
 .modal {
   &.show {
     display: block;
   }
 }
 
-.modal-backdrop {
-  &.show {
-    opacity: 0.5;
+.modal-dialog {
+  margin: var(--spacing-md);
+  
+  @media (min-width: 576px) {
+    margin: var(--spacing-xl) auto;
+    max-width: 500px;
   }
 }
 
-@media (max-width: 768px) {
-  .admin-container {
-    padding: var(--spacing-md) 0;
-  }
+.modal-content {
+  border-radius: var(--border-radius-xl);
+  overflow: hidden;
+}
 
-  .table {
+.modal-header {
+  border-bottom: none;
+  padding: var(--spacing-lg);
+}
+
+.modal-body {
+  padding: var(--spacing-lg);
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+  
+  &.show {
+    opacity: 1;
+  }
+  
+  &.fade {
+    opacity: 0;
+    transition: opacity 0.15s linear;
+  }
+}
+
+// ===== FORM STYLES =====
+.form-control-lg,
+.form-select-lg {
+  border-radius: var(--border-radius-lg);
+  border: var(--border-width-medium) solid var(--color-border-dark);
+  transition: all var(--transition-slow);
+  
+  &:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+  }
+}
+
+.form-label {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  
+  i {
+    font-size: var(--font-size-base);
+  }
+}
+
+// ===== BADGE STYLES =====
+.badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-xs);
+}
+
+// ===== BUTTON STYLES =====
+.btn-lg {
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--border-radius-lg);
+  transition: all var(--transition-slow);
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.btn-outline-primary,
+.btn-outline-danger {
+  border-width: var(--border-width-medium);
+  transition: all var(--transition-base);
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+// ===== RESPONSIVE =====
+@media (min-width: 768px) {
+  .admin-container {
+    padding: var(--spacing-xl) 0;
+  }
+  
+  .card-header {
+    padding: var(--spacing-xl) !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .admin-container {
+    padding: var(--spacing-sm) 0;
+  }
+  
+  .card-header {
+    padding: var(--spacing-md) !important;
+    
+    h4 {
+      font-size: var(--font-size-lg);
+    }
+    
+    .header-icon {
+      width: 40px;
+      height: 40px;
+      font-size: var(--font-size-xl);
+    }
+  }
+  
+  .modal-dialog {
+    margin: var(--spacing-sm);
+  }
+  
+  .modal-body {
+    padding: var(--spacing-md);
+  }
+  
+  .btn-lg {
+    padding: var(--spacing-sm) var(--spacing-lg);
     font-size: var(--font-size-sm);
   }
 }
-
