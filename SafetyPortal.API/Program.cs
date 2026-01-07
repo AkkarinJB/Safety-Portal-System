@@ -77,7 +77,7 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddScoped<ISafetyReportRepository, SafetyReportRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IFileService, CloudinaryFileService>();
 builder.Services.AddScoped<ISafetyReportService, SafetyReportService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();

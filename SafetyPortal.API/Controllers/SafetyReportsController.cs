@@ -35,6 +35,12 @@ namespace SafetyPortal.API.Controllers
         {
             try
             {
+                if (imagePath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
+                    imagePath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Redirect(imagePath);
+                }
+
                 var result = await _reportService.GetImageAsync(imagePath);
                 if (result == null)
                 {
