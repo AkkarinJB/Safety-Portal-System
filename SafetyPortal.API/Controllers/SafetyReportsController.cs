@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SafetyPortal.API.Data;
-using SafetyPortal.API.Models;
-using SafetyPortal.API.DTOs; 
+using SafetyPortal.API.DTOs;
 using SafetyPortal.API.Enums;
-using System.IO;
+using SafetyPortal.API.Helpers;
+using SafetyPortal.API.Models;
+using SafetyPortal.API.Services;
+using SafetyPortal.API.Mappers;
 
 namespace SafetyPortal.API.Controllers
 {
@@ -14,71 +14,45 @@ namespace SafetyPortal.API.Controllers
     [Authorize]
     public class SafetyReportsController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly IWebHostEnvironment _environment;
+        private readonly ISafetyReportService _reportService;
 
-        public SafetyReportsController(AppDbContext context, IWebHostEnvironment environment)
+        public SafetyReportsController(ISafetyReportService reportService)
         {
-            _context = context;
-            _environment = environment;
+            _reportService = reportService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SafetyReports>>> GetSafetyReports()
         {
-            return await _context.SafetyReports.OrderByDescending(r => r.CreatedAt).ToListAsync();
+            var reports = await _reportService.GetAllReportsAsync();
+            return Ok(reports);
         }
 
         [HttpGet("images/{*imagePath}")]
         [AllowAnonymous]
-        public IActionResult GetImage(string imagePath)
+        public async Task<IActionResult> GetImage(string imagePath)
         {
             try
             {
-                string webRootPath = _environment.WebRootPath;
-                if (string.IsNullOrWhiteSpace(webRootPath))
-                {
-                    webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                }
-
-                if (!imagePath.StartsWith("uploads/"))
-                {
-                    imagePath = "uploads/" + imagePath;
-                }
-
-                string fullPath = Path.Combine(webRootPath, imagePath);
-
-                if (!fullPath.StartsWith(webRootPath, StringComparison.OrdinalIgnoreCase))
-                {
-                    return BadRequest("Invalid image path");
-                }
-
-                if (!System.IO.File.Exists(fullPath))
+                var result = await _reportService.GetImageAsync(imagePath);
+                if (result == null)
                 {
                     return NotFound("Image not found");
                 }
 
-                string contentType = "image/jpeg";
-                string extension = Path.GetExtension(fullPath).ToLowerInvariant();
-                switch (extension)
-                {
-                    case ".png":
-                        contentType = "image/png";
-                        break;
-                    case ".gif":
-                        contentType = "image/gif";
-                        break;
-                    case ".jpg":
-                    case ".jpeg":
-                        contentType = "image/jpeg";
-                        break;
-                    case ".webp":
-                        contentType = "image/webp";
-                        break;
-                }
-
-                var fileBytes = System.IO.File.ReadAllBytes(fullPath);
-                return File(fileBytes, contentType);
+                return File(result.Value.fileBytes, result.Value.contentType);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest($"Invalid image path: {ex.Message}");
+            }
+            catch (FileNotFoundException)
+            {
+                return NotFound("Image file not found");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, $"Access denied: {ex.Message}");
             }
             catch (Exception ex)
             {
@@ -89,215 +63,99 @@ namespace SafetyPortal.API.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<SafetyReports>> GetSafetyReport(int id)
         {
-            var safetyReport = await _context.SafetyReports.FindAsync(id);
-            if (safetyReport == null) return NotFound();
-            return safetyReport;
+            var report = await _reportService.GetReportByIdAsync(id);
+            if (report == null) return NotFound();
+            return Ok(report);
         }
 
         [HttpPost]
+        [RequireRole(UserRole.Inspector)] // เฉพาะผู้ตรวจสอบเท่านั้นที่สามารถสร้างรายงานใหม่ได้
         public async Task<ActionResult<SafetyReports>> PostSafetyReport([FromForm] CreateReportDto dto)
         {
-            string? imagePath = null;
-            if (dto.ImageBefore != null)
+            try
             {
-                imagePath = await SaveImage(dto.ImageBefore);
-            }
+                if (Request.Form.ContainsKey("status"))
+                    dto.StatusString = Request.Form["status"].ToString();
+                if (Request.Form.ContainsKey("rank"))
+                    dto.RankString = Request.Form["rank"].ToString();
+                if (Request.Form.ContainsKey("stop6"))
+                    dto.Stop6String = Request.Form["stop6"].ToString();
 
-            // Parse Status from FormData (FormData sends as string)
-            ReportStatus status = ReportStatus.NotYetDone;
-            if (Request.Form.ContainsKey("status"))
-            {
-                string statusString = Request.Form["status"].ToString();
-                if (Enum.TryParse<ReportStatus>(statusString, true, out ReportStatus parsedStatus))
-                {
-                    status = parsedStatus;
-                }
+                var report = await _reportService.CreateReportAsync(dto, dto.ImageBefore);
+                return CreatedAtAction(nameof(GetSafetyReport), new { id = report.Id }, report);
             }
-            else if (dto.Status.HasValue)
+            catch (ArgumentException ex)
             {
-                status = dto.Status.Value;
+                return BadRequest(ex.Message);
             }
-
-            // Parse Rank from FormData
-            RiskRank rank = RiskRank.C;
-            if (Request.Form.ContainsKey("rank"))
+            catch (InvalidOperationException ex)
             {
-                string rankString = Request.Form["rank"].ToString();
-                if (Enum.TryParse<RiskRank>(rankString, true, out RiskRank parsedRank))
-                {
-                    rank = parsedRank;
-                }
+                return StatusCode(500, $"Invalid operation: {ex.Message}");
             }
-            else if (dto.Rank.HasValue)
+            catch (Exception ex)
             {
-                rank = dto.Rank.Value;
+                return StatusCode(500, $"Error creating report: {ex.Message}");
             }
-
-            // Parse Stop6 from FormData
-            Stop6 stop6 = Stop6.Other;
-            if (Request.Form.ContainsKey("stop6"))
-            {
-                string stop6String = Request.Form["stop6"].ToString();
-                if (int.TryParse(stop6String, out int stop6Int))
-                {
-                    if (Enum.IsDefined(typeof(Stop6), stop6Int))
-                    {
-                        stop6 = (Stop6)stop6Int;
-                    }
-                }
-            }
-            else if (dto.Stop6.HasValue)
-            {
-                stop6 = dto.Stop6.Value;
-            }
-
-            var safetyReport = new SafetyReports
-            {
-                Area = dto.Area,
-                ReportDate = dto.ReportDate,
-                Detail = dto.Detail,
-                Category = dto.Category,
-                Stop6 = stop6,
-                Rank = rank,
-                Suggestion = dto.Suggestion,
-                ResponsiblePerson = dto.ResponsiblePerson,
-                ImageBeforeUrl = imagePath,
-                Status = status,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.SafetyReports.Add(safetyReport);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetSafetyReport", new { id = safetyReport.Id }, safetyReport);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutSafetyReport(int id, [FromForm] UpdateReportDto dto)
         {
-            var safetyReport = await _context.SafetyReports.FindAsync(id);
-            if (safetyReport == null) return NotFound();
+            try
+            {
+                var userRole = UserHelper.GetUserRole(User);
+                var report = await _reportService.GetReportByIdAsync(id);
+                
+                if (report == null) return NotFound();
 
-            if (!string.IsNullOrEmpty(dto.Area))
-                safetyReport.Area = dto.Area;
-            
-            if (dto.ReportDate.HasValue)
-                safetyReport.ReportDate = dto.ReportDate.Value;
-            
-            if (!string.IsNullOrEmpty(dto.Detail))
-                safetyReport.Detail = dto.Detail;
-            
-            if (!string.IsNullOrEmpty(dto.Category))
-                safetyReport.Category = dto.Category;
-            
-            // Parse Stop6 from string if needed
-            if (dto.Stop6.HasValue)
-            {
-                safetyReport.Stop6 = dto.Stop6.Value;
-            }
-            else if (Request.Form.ContainsKey("stop6"))
-            {
-                string stop6String = Request.Form["stop6"].ToString();
-                if (int.TryParse(stop6String, out int stop6Int))
+                // ผู้แก้ไขไม่สามารถแก้ไขรายละเอียดปัญหาและข้อแนะนำได้
+                if (userRole == UserRole.Editor)
                 {
-                    if (Enum.IsDefined(typeof(Stop6), stop6Int))
-                    {
-                        safetyReport.Stop6 = (Stop6)stop6Int;
-                    }
+                    // อนุญาตให้แก้ไขเฉพาะ: status, imageAfter, responsiblePerson
+                    // ไม่ให้แก้ไข: area, detail, category, stop6, rank, suggestion, imageBefore
+                    dto.Area = null;
+                    dto.Detail = null;
+                    dto.Category = null;
+                    dto.Stop6 = null;
+                    dto.Rank = null;
+                    dto.Suggestion = null;
+                    dto.ImageBefore = null;
                 }
-            }
-            
-            // Parse Rank from string if needed
-            if (dto.Rank.HasValue)
-            {
-                safetyReport.Rank = dto.Rank.Value;
-            }
-            else if (Request.Form.ContainsKey("rank"))
-            {
-                string rankString = Request.Form["rank"].ToString();
-                if (Enum.TryParse<RiskRank>(rankString, true, out RiskRank parsedRank))
-                {
-                    safetyReport.Rank = parsedRank;
-                }
-            }
-            
-            if (!string.IsNullOrEmpty(dto.Suggestion))
-                safetyReport.Suggestion = dto.Suggestion;
-            
-            if (!string.IsNullOrEmpty(dto.ResponsiblePerson))
-                safetyReport.ResponsiblePerson = dto.ResponsiblePerson;
-            
-            // Parse Status from string if needed
-            if (dto.Status.HasValue)
-            {
-                safetyReport.Status = dto.Status.Value;
-            }
-            else if (Request.Form.ContainsKey("status"))
-            {
-                string statusString = Request.Form["status"].ToString();
-                if (Enum.TryParse<ReportStatus>(statusString, true, out ReportStatus parsedStatus))
-                {
-                    safetyReport.Status = parsedStatus;
-                }
-            }
 
-            if (dto.ImageBefore != null)
-            {
-                safetyReport.ImageBeforeUrl = await SaveImage(dto.ImageBefore);
+                if (Request.Form.ContainsKey("status") && Enum.TryParse<Enums.ReportStatus>(Request.Form["status"].ToString(), true, out var status))
+                    dto.Status = status;
+                if (Request.Form.ContainsKey("rank") && Enum.TryParse<Enums.RiskRank>(Request.Form["rank"].ToString(), true, out var rank))
+                    dto.Rank = rank;
+                if (Request.Form.ContainsKey("stop6") && int.TryParse(Request.Form["stop6"].ToString(), out var stop6Int) && Enum.IsDefined(typeof(Enums.Stop6), stop6Int))
+                    dto.Stop6 = (Enums.Stop6)stop6Int;
+
+                var success = await _reportService.UpdateReportAsync(id, dto, dto.ImageBefore, dto.ImageAfter);
+                if (!success) return NotFound();
+
+                return NoContent();
             }
-
-            if (dto.ImageAfter != null)
+            catch (ArgumentException ex)
             {
-                safetyReport.ImageAfterUrl = await SaveImage(dto.ImageAfter);
-                if (safetyReport.Status == ReportStatus.NotYetDone || safetyReport.Status == ReportStatus.OnProcess)
-                {
-                    safetyReport.Status = ReportStatus.Done;
-                }
+                return BadRequest(ex.Message);
             }
-
-            safetyReport.UpdatedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            return NoContent();
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(500, $"Invalid operation: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error updating report: {ex.Message}");
+            }
         }
 
         [HttpDelete("{id}")]
+        [RequireRole(UserRole.Inspector)] // เฉพาะผู้ตรวจสอบเท่านั้นที่สามารถลบรายงานได้
         public async Task<IActionResult> DeleteSafetyReport(int id)
         {
-            var safetyReport = await _context.SafetyReports.FindAsync(id);
-            if (safetyReport == null) return NotFound();
-
-            _context.SafetyReports.Remove(safetyReport);
-            await _context.SaveChangesAsync();
+            var success = await _reportService.DeleteReportAsync(id);
+            if (!success) return NotFound();
 
             return NoContent();
-        }
-
-
-        private async Task<string> SaveImage(IFormFile imageFile)
-        {
-            string webRootPath = _environment.WebRootPath;
-            if (string.IsNullOrWhiteSpace(webRootPath))
-            {
-                webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            }
-
-            string uploadsFolder = Path.Combine(webRootPath, "uploads");
-
-            if (!Directory.Exists(uploadsFolder))
-            {
-                Directory.CreateDirectory(uploadsFolder);
-            }
-
-            string uniqueFileName = Guid.NewGuid().ToString() + "_" + imageFile.FileName;
-            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
-            {
-                await imageFile.CopyToAsync(fileStream);
-            }
-
-            return "uploads/" + uniqueFileName;
         }
     }
 }

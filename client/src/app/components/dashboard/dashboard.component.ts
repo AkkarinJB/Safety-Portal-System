@@ -5,10 +5,11 @@ import { RouterModule, Router } from '@angular/router';
 import { SafetyApiService } from '../../services/safety-api.service';
 import { SafetyReport } from '../../models/safety-report';
 import { AlertService } from '../../services/alert.service';
+import { AuthService } from '../../services/auth.service';
+import { UserRole } from '../../models/user-role';
+import { ChartInstance, ChartConstructor, WindowWithChart } from '../../models/chart-types';
+import { JSPDF, JSPDFConstructor, WindowWithJSPDF } from '../../models/pdf-types';
 import { environment } from '../../../environments/environment';
-
-declare var Chart: any;
-declare var jsPDF: any;
 
 @Component({
   selector: 'app-dashboard',
@@ -24,16 +25,24 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   searchQuery = '';
   selectedRank: string | null = null;
   selectedStatus: string | null = null;
+  userRole: UserRole | null = null;
+  isInspector = false;
+  isEditor = false;
 
   @ViewChild('overviewChart') overviewChartRef!: ElementRef<HTMLCanvasElement>;
   
-  private overviewChart: any;
+  private overviewChart: ChartInstance | null = null;
 
   constructor(
     private api: SafetyApiService,
     private alertService: AlertService,
-    private router: Router
-  ) {}
+    private router: Router,
+    private authService: AuthService
+  ) {
+    this.userRole = this.authService.getUserRole();
+    this.isInspector = this.authService.isInspector();
+    this.isEditor = this.authService.isEditor();
+  }
 
   ngOnInit(): void {
     this.loadReports();
@@ -45,23 +54,26 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     }
   }
 
-  loadReports() {
+  loadReports(): void {
     this.isLoading = true;
     this.api.getAllReports().subscribe({
-      next: (data) => {
+      next: (data: SafetyReport[]) => {
         this.reports = data;
         this.applyFilters();
         this.isLoading = false;
         setTimeout(() => this.initCharts(), 100);
       },
-      error: () => {
+      error: (error: unknown) => {
+        console.error('Error loading reports:', error);
         this.isLoading = false;
+        this.alertService.toastError('ไม่สามารถโหลดข้อมูลได้');
       }
     });
   }
 
-  initCharts() {
-    if (typeof Chart === 'undefined') {
+  initCharts(): void {
+    const windowWithChart = window as unknown as WindowWithChart;
+    if (!windowWithChart.Chart) {
       console.warn('Chart.js is not loaded. Please install: npm install chart.js');
       return;
     }
@@ -69,12 +81,21 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     this.initOverviewChart();
   }
 
-  initOverviewChart() {
+  initOverviewChart(): void {
     if (!this.overviewChartRef?.nativeElement) return;
 
     const ctx = this.overviewChartRef.nativeElement.getContext('2d');
+    if (!ctx) return;
+
     if (this.overviewChart) {
       this.overviewChart.destroy();
+    }
+
+    const windowWithChart = window as unknown as WindowWithChart;
+    const Chart = windowWithChart.Chart;
+    if (!Chart) {
+      console.warn('Chart.js is not loaded');
+      return;
     }
 
     const notDone = this.getStatusCount('NotYetDone');
@@ -91,10 +112,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
             label: 'จำนวนรายการ',
             data: [notDone, onProcess, done, total],
             backgroundColor: [
-              'rgba(220, 53, 69, 0.8)',   // ยังไม่ดำเนินการ - แดง
-              'rgba(255, 193, 7, 0.8)',   // กำลังดำเนินการ - เหลือง
-              'rgba(25, 135, 84, 0.8)',   // เสร็จสิ้น - เขียว
-              'rgba(13, 110, 253, 0.8)'   // รวมทั้งหมด - ฟ้า
+              'rgba(220, 53, 69, 0.8)',   
+              'rgba(255, 193, 7, 0.8)',   
+              'rgba(25, 135, 84, 0.8)',   
+              'rgba(13, 110, 253, 0.8)'   
             ],
             borderColor: [
               'rgb(220, 53, 69)',
@@ -118,18 +139,24 @@ export class DashboardComponent implements OnInit, AfterViewInit {
               font: {
                 size: 12
               },
-              generateLabels: (chart: any) => {
+              generateLabels: (chart: ChartInstance) => {
                 const data = chart.data;
                 if (data.labels.length && data.datasets.length) {
                   return data.labels.map((label: string, i: number) => {
                     const value = data.datasets[0].data[i];
                     const total = data.datasets[0].data[3]; 
                     const percentage = i < 3 && total > 0 ? ((value / total) * 100).toFixed(1) : '';
+                    const backgroundColor = Array.isArray(data.datasets[0].backgroundColor) 
+                      ? data.datasets[0].backgroundColor[i] 
+                      : data.datasets[0].backgroundColor || '';
+                    const borderColor = Array.isArray(data.datasets[0].borderColor)
+                      ? data.datasets[0].borderColor[i]
+                      : data.datasets[0].borderColor || '';
                     return {
                       text: `${label}: ${value} ${percentage ? `(${percentage}%)` : ''}`,
-                      fillStyle: data.datasets[0].backgroundColor[i],
-                      strokeStyle: data.datasets[0].borderColor[i],
-                      lineWidth: data.datasets[0].borderWidth,
+                      fillStyle: backgroundColor,
+                      strokeStyle: borderColor,
+                      lineWidth: data.datasets[0].borderWidth || 2,
                       hidden: false,
                       index: i
                     };
@@ -141,12 +168,12 @@ export class DashboardComponent implements OnInit, AfterViewInit {
           },
           tooltip: {
             callbacks: {
-              label: (context: any) => {
+              label: (context: { label?: string; parsed?: number; dataset?: { data: number[] }; dataIndex: number }) => {
                 const label = context.label || '';
                 const value = context.parsed || 0;
-                const total = context.dataset.data[3]; 
+                const total = context.dataset?.data[3] || 0; 
                 if (context.dataIndex < 3) {
-                  const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                  const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
                   return `${label}: ${value} รายการ (${percentage}%)`;
                 }
                 return `${label}: ${value} ไซต์`;
@@ -217,7 +244,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     return statusStringMap[String(status)] || String(status);
   }
 
-  applyFilters() {
+  applyFilters(): void {
     let filtered = [...this.reports];
 
     if (this.searchQuery.trim()) {
@@ -242,28 +269,28 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     }
   }
 
-  onSearchChange() {
+  onSearchChange(): void {
     this.applyFilters();
   }
 
-  onRankFilterChange(rank: string | null) {
+  onRankFilterChange(rank: string | null): void {
     this.selectedRank = rank;
     this.applyFilters();
   }
 
-  onStatusFilterChange(status: string | null) {
+  onStatusFilterChange(status: string | null): void {
     this.selectedStatus = status;
     this.applyFilters();
   }
 
-  clearFilters() {
+  clearFilters(): void {
     this.searchQuery = '';
     this.selectedRank = null;
     this.selectedStatus = null;
     this.applyFilters();
   }
 
-  deleteItem(id: number) {
+  deleteItem(id: number): void {
     this.alertService.confirm('ยืนยันการลบ?', 'ข้อมูลจะหายไปถาวรและกู้คืนไม่ได้นะครับ')
       .then((isConfirmed) => {
         if (isConfirmed) {
@@ -272,8 +299,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
               this.alertService.toastSuccess('ลบข้อมูลเรียบร้อย');
               this.loadReports();
             },
-            error: (err) => {
-              this.alertService.error('ลบไม่สำเร็จ', 'เกิดข้อผิดพลาด: ' + err.message);
+            error: (err: unknown) => {
+              const errorMessage = err instanceof Error ? err.message : 'ไม่ทราบสาเหตุ';
+              console.error('Error deleting report:', err);
+              this.alertService.error('ลบไม่สำเร็จ', 'เกิดข้อผิดพลาด: ' + errorMessage);
             }
           });
         }
@@ -304,16 +333,22 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     return index + 1;
   }
 
-  viewDetails(id: number) {
+  viewDetails(id: number): void {
     this.router.navigate(['/edit', id]);
   }
 
-  exportChartToPDF() {
+  exportChartToPDF(): void {
     if (!this.overviewChart) {
       this.alertService.toastError('กรุณารอให้ Chart โหลดเสร็จก่อน');
       return;
     }
 
+    const windowWithJSPDF = window as unknown as WindowWithJSPDF;
+    const jsPDF = windowWithJSPDF.jsPDF;
+    if (!jsPDF) {
+      this.alertService.toastError('jsPDF ไม่ได้ถูกโหลด กรุณาตรวจสอบการติดตั้ง');
+      return;
+    }
 
     try {
       const chartImage = this.overviewChart.toBase64Image('image/png', 1);
@@ -366,9 +401,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       pdf.save(fileName);
       
       this.alertService.toastSuccess('ส่งออก PDF เรียบร้อยแล้ว');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error exporting PDF:', error);
-      this.alertService.toastError('เกิดข้อผิดพลาดในการส่งออก PDF: ' + error.message);
+      const errorMessage = error instanceof Error ? error.message : 'ไม่ทราบสาเหตุ';
+      this.alertService.toastError('เกิดข้อผิดพลาดในการส่งออก PDF: ' + errorMessage);
     }
   }
 }

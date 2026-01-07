@@ -4,6 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { SafetyApiService } from '../../services/safety-api.service';
 import { AlertService } from '../../services/alert.service';
+import { CreateReportForm } from '../../models/create-report-form';
+import { 
+  SpeechRecognition, 
+  SpeechRecognitionConstructor,
+  SpeechRecognitionEvent,
+  SpeechRecognitionErrorEvent,
+  WindowWithSpeechRecognition 
+} from '../../models/speech-recognition';
+import { AiAnalysisResult } from '../../models/api-responses';
 
 @Component({
   selector: 'app-report-form',
@@ -13,7 +22,7 @@ import { AlertService } from '../../services/alert.service';
   styleUrls: ['./report-form.component.scss']
 })
 export class ReportFormComponent implements OnDestroy {
-  formData = {
+  formData: CreateReportForm = {
     area: '',
     reportDate: new Date().toISOString().split('T')[0], 
     detail: '',
@@ -32,8 +41,8 @@ export class ReportFormComponent implements OnDestroy {
   fileName = '';
   isListening = false;
   isListeningSuggestion = false; 
-  private recognition: any = null;
-  private recognitionSuggestion: any = null; 
+  private recognition: SpeechRecognition | null = null;
+  private recognitionSuggestion: SpeechRecognition | null = null; 
 
   constructor(
     private api: SafetyApiService,
@@ -43,8 +52,9 @@ export class ReportFormComponent implements OnDestroy {
     this.initSpeechRecognition();
   }
 
-  initSpeechRecognition() {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  initSpeechRecognition(): void {
+    const windowWithSpeech = window as unknown as WindowWithSpeechRecognition;
+    const SpeechRecognition = windowWithSpeech.SpeechRecognition || windowWithSpeech.webkitSpeechRecognition;
     
     if (SpeechRecognition) {
       this.recognition = new SpeechRecognition();
@@ -52,14 +62,14 @@ export class ReportFormComponent implements OnDestroy {
       this.recognition.continuous = false;
       this.recognition.interimResults = false;
 
-      this.recognition.onresult = (event: any) => {
+      this.recognition.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = event.results[0][0].transcript;
         this.formData.detail += (this.formData.detail ? ' ' : '') + transcript;
         this.isListening = false;
         this.alertService.toastSuccess('รับเสียงเรียบร้อย');
       };
 
-      this.recognition.onerror = (event: any) => {
+      this.recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         this.handleSpeechError(event.error, 'detail');
       };
 
@@ -72,14 +82,14 @@ export class ReportFormComponent implements OnDestroy {
       this.recognitionSuggestion.continuous = false;
       this.recognitionSuggestion.interimResults = false;
 
-      this.recognitionSuggestion.onresult = (event: any) => {
+      this.recognitionSuggestion.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = event.results[0][0].transcript;
         this.formData.suggestion += (this.formData.suggestion ? ' ' : '') + transcript;
         this.isListeningSuggestion = false;
         this.alertService.toastSuccess('รับเสียงเรียบร้อย');
       };
 
-      this.recognitionSuggestion.onerror = (event: any) => {
+      this.recognitionSuggestion.onerror = (event: SpeechRecognitionErrorEvent) => {
         this.handleSpeechError(event.error, 'suggestion');
       };
 
@@ -89,7 +99,7 @@ export class ReportFormComponent implements OnDestroy {
     }
   }
 
-  private handleSpeechError(error: string, type: string) {
+  private handleSpeechError(error: string, type: 'detail' | 'suggestion'): void {
     console.error('Speech recognition error:', error);
     if (type === 'detail') {
       this.isListening = false;
@@ -115,7 +125,7 @@ export class ReportFormComponent implements OnDestroy {
     this.alertService.toastError(errorMessage);
   }
 
-  startVoiceInput(type: 'detail' | 'suggestion' = 'detail') {
+  startVoiceInput(type: 'detail' | 'suggestion' = 'detail'): void {
     const recognition = type === 'detail' ? this.recognition : this.recognitionSuggestion;
     const isListening = type === 'detail' ? this.isListening : this.isListeningSuggestion;
 
@@ -130,25 +140,26 @@ export class ReportFormComponent implements OnDestroy {
     }
 
     try {
-      if (type === 'detail') {
+      if (type === 'detail' && this.recognition) {
         this.isListening = true;
         this.recognition.start();
-      } else {
+      } else if (type === 'suggestion' && this.recognitionSuggestion) {
         this.isListeningSuggestion = true;
         this.recognitionSuggestion.start();
       }
       this.alertService.toastSuccess('กำลังฟังเสียง... พูดได้เลย');
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (type === 'detail') {
         this.isListening = false;
       } else {
         this.isListeningSuggestion = false;
       }
-      this.alertService.toastError('ไม่สามารถเริ่มรับเสียงได้: ' + error.message);
+      const errorMessage = error instanceof Error ? error.message : 'ไม่ทราบสาเหตุ';
+      this.alertService.toastError('ไม่สามารถเริ่มรับเสียงได้: ' + errorMessage);
     }
   }
 
-  stopVoiceInput(type: 'detail' | 'suggestion' = 'detail') {
+  stopVoiceInput(type: 'detail' | 'suggestion' = 'detail'): void {
     if (type === 'detail' && this.recognition && this.isListening) {
       this.recognition.stop();
       this.isListening = false;
@@ -158,8 +169,9 @@ export class ReportFormComponent implements OnDestroy {
     }
   }
 
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         this.alertService.toastError('ไฟล์ภาพต้องไม่เกิน 5MB');
@@ -182,7 +194,7 @@ export class ReportFormComponent implements OnDestroy {
     }
   }
 
-  removeImage() {
+  removeImage(): void {
     this.selectedFile = null;
     this.imagePreview = null;
     this.fileName = '';
@@ -192,7 +204,7 @@ export class ReportFormComponent implements OnDestroy {
     }
   }
 
-  askAi() {
+  askAi(): void {
     if (!this.formData.detail || this.formData.detail.trim().length < 10) {
       this.alertService.toastError('กรุณากรอกรายละเอียดปัญหาอย่างน้อย 10 ตัวอักษร');
       return;
@@ -200,22 +212,23 @@ export class ReportFormComponent implements OnDestroy {
 
     this.isAnalyzing = true;
     this.api.analyzeIssue(this.formData.detail).subscribe({
-      next: (res) => {
+      next: (res: AiAnalysisResult) => {
         this.formData.category = res.category;
         this.formData.rank = res.rank;
         this.formData.suggestion = res.suggestion;
         this.isAnalyzing = false;
         this.alertService.toastSuccess('AI วิเคราะห์เสร็จสิ้น');
       },
-      error: (err) => {
+      error: (err: unknown) => {
         console.error(err);
-        this.alertService.toastError('เกิดข้อผิดพลาดในการวิเคราะห์: ' + err.message);
+        const errorMessage = err instanceof Error ? err.message : 'ไม่ทราบสาเหตุ';
+        this.alertService.toastError('เกิดข้อผิดพลาดในการวิเคราะห์: ' + errorMessage);
         this.isAnalyzing = false;
       }
     });
   }
 
-  onSubmit() {
+  onSubmit(): void {
     if (!this.formData.area.trim()) {
       this.alertService.toastError('กรุณากรอกพื้นที่ที่พบปัญหา');
       return;
@@ -232,8 +245,9 @@ export class ReportFormComponent implements OnDestroy {
         this.alertService.success('แจ้งปัญหาเรียบร้อย!', 'ระบบได้บันทึกข้อมูลของคุณแล้ว');
         this.router.navigate(['/dashboard']);
       },
-      error: (err) => {
-        this.alertService.error('บันทึกไม่สำเร็จ', err.message);
+      error: (err: unknown) => {
+        const errorMessage = err instanceof Error ? err.message : 'ไม่ทราบสาเหตุ';
+        this.alertService.error('บันทึกไม่สำเร็จ', errorMessage);
         this.isSubmitting = false;
       }
     });

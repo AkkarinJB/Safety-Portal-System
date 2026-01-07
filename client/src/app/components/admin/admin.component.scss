@@ -1,0 +1,64 @@
+// ===== ADMIN COMPONENT STYLES =====
+// ใช้ Design Tokens จาก _design-tokens.scss
+
+.admin-container {
+  min-height: calc(100vh - 200px);
+  background: linear-gradient(135deg, var(--color-gray-50) 0%, var(--color-gray-200) 100%);
+  padding: var(--spacing-xl) 0;
+}
+
+.card-header {
+  .header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-2xl);
+  }
+}
+
+.table {
+  th {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    border-bottom: var(--border-width-medium) solid var(--color-border-dark);
+  }
+
+  td {
+    vertical-align: middle;
+  }
+}
+
+.table-row-hover {
+  transition: background-color var(--transition-base);
+
+  &:hover {
+    background-color: var(--color-bg-secondary);
+  }
+}
+
+.modal {
+  &.show {
+    display: block;
+  }
+}
+
+.modal-backdrop {
+  &.show {
+    opacity: 0.5;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-container {
+    padding: var(--spacing-md) 0;
+  }
+
+  .table {
+    font-size: var(--font-size-sm);
+  }
+}
+

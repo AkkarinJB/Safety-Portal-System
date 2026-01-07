@@ -48,6 +48,7 @@
                       class="form-control" 
                       [(ngModel)]="formData.area" 
                       name="area" 
+                      [disabled]="isEditor"
                       required>
                   </div>
                   <div class="col-12 col-md-6">
@@ -75,6 +76,7 @@
                     rows="4" 
                     [(ngModel)]="formData.detail" 
                     name="detail" 
+                    [disabled]="isEditor"
                     required></textarea>
                 </div>
 
@@ -83,12 +85,13 @@
                   <label class="form-label fw-bold">
                     <i class="bi bi-tag me-2 text-primary"></i>หมวดหมู่
                   </label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    [(ngModel)]="formData.category" 
-                    name="category"
-                    placeholder="เช่น อุปกรณ์, สารเคมี">
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      [(ngModel)]="formData.category" 
+                      name="category"
+                      [disabled]="isEditor"
+                      placeholder="เช่น อุปกรณ์, สารเคมี">
                 </div>
 
                 <!-- Stop6, Rank, Status -->
@@ -102,6 +105,7 @@
                       class="form-select" 
                       [(ngModel)]="formData.stop6" 
                       name="stop6"
+                      [disabled]="isEditor"
                       required>
                       <option [value]="1">1. อันตรายจากเครื่องจักร</option>
                       <option [value]="2">2. อันตรายจากวัตถุหนักตกใส่</option>
@@ -120,6 +124,7 @@
                       class="form-select" 
                       [(ngModel)]="formData.rank" 
                       name="rank"
+                      [disabled]="isEditor"
                       required>
                       <option value="A">A - เร่งด่วนมาก</option>
                       <option value="B">B - เร่งด่วน</option>
@@ -153,7 +158,9 @@
                       class="form-control" 
                       rows="3" 
                       [(ngModel)]="formData.suggestion" 
-                      name="suggestion"></textarea>
+                      name="suggestion"
+                      [disabled]="isEditor"
+                      placeholder="ผู้แก้ไขไม่สามารถแก้ไขข้อแนะนำได้"></textarea>
                   </div>
                   <div class="col-12 col-md-6">
                     <label class="form-label fw-bold">
@@ -190,6 +197,7 @@
                       class="form-control" 
                       (change)="onFileSelected($event, 'before')" 
                       accept="image/*"
+                      [disabled]="isEditor"
                       id="beforeImageUpload">
                     <label for="beforeImageUpload" class="upload-label">
                       <i class="bi bi-cloud-upload me-2"></i>

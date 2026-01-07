@@ -1,0 +1,255 @@
+<div class="admin-container">
+  <div class="container-fluid px-3 px-md-4 py-4">
+    <!-- Header -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+      <div class="card-header bg-gradient-danger text-white py-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center">
+            <div class="header-icon me-3">
+              <i class="bi bi-shield-lock-fill"></i>
+            </div>
+            <div>
+              <h4 class="mb-0 fw-bold">จัดการผู้ใช้</h4>
+              <p class="mb-0 small opacity-75">เพิ่ม แก้ไข และลบผู้ตรวจสอบและผู้แก้ไข</p>
+            </div>
+          </div>
+          <button class="btn btn-light btn-lg" (click)="openCreateModal()">
+            <i class="bi bi-plus-circle me-2"></i>เพิ่มผู้ใช้
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="text-center py-5">
+      <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="text-muted">กำลังโหลดข้อมูล...</p>
+    </div>
+
+    <!-- Users Table -->
+    <div *ngIf="!isLoading" class="card shadow-sm border-0 rounded-4">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-4" style="width: 5%;">#</th>
+                <th style="width: 15%;">ชื่อผู้ใช้</th>
+                <th style="width: 10%;">รหัสผ่าน</th>
+                <th style="width: 15%;">ชื่อ-นามสกุล</th>
+                <th style="width: 15%;">อีเมล</th>
+                <th style="width: 12%;">บทบาท</th>
+                <th style="width: 10%;">สถานะ</th>
+                <th style="width: 10%;">วันที่สร้าง</th>
+                <th class="text-end pe-4" style="width: 8%;">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of users; let i = index" class="table-row-hover">
+                <td class="ps-4">
+                  <span class="fw-bold text-muted">#{{ i + 1 }}</span>
+                </td>
+                <td>
+                  <div class="fw-bold text-dark">{{ user.username }}</div>
+                </td>
+                <td>
+                  <code class="text-primary">{{ user.code }}</code>
+                </td>
+                <td>{{ user.fullName || '-' }}</td>
+                <td>{{ user.email || '-' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="getRoleBadgeClass(user.role)">
+                    {{ getRoleLabel(user.role) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="user.isActive ? 'bg-success' : 'bg-secondary'">
+                    {{ user.isActive ? 'ใช้งาน' : 'ปิดใช้งาน' }}
+                  </span>
+                </td>
+                <td>
+                  <small class="text-muted">{{ user.createdAt | date:'dd/MM/yyyy' }}</small>
+                </td>
+                <td class="text-end pe-4">
+                  <div class="btn-group">
+                    <button 
+                      class="btn btn-sm btn-outline-primary"
+                      (click)="openEditModal(user)"
+                      title="แก้ไข">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button 
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="deleteUser(user)"
+                      title="ลบ">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="users.length === 0">
+                <td colspan="9" class="text-center py-5 text-muted">
+                  <i class="bi bi-inbox display-4 d-block mb-3"></i>
+                  ยังไม่มีข้อมูลผู้ใช้
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create User Modal -->
+<div class="modal fade" [class.show]="showCreateModal" [style.display]="showCreateModal ? 'block' : 'none'" tabindex="-1" *ngIf="showCreateModal">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-person-plus me-2"></i>เพิ่มผู้ใช้ใหม่
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeCreateModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="onCreateSubmit()" #createForm="ngForm">
+          <div class="mb-3">
+            <label class="form-label fw-bold">ชื่อผู้ใช้ <span class="text-danger">*</span></label>
+            <input 
+              type="text" 
+              class="form-control" 
+              [(ngModel)]="createForm.username" 
+              name="username"
+              required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">รหัสผ่าน (4 หลัก) <span class="text-danger">*</span></label>
+            <input 
+              type="text" 
+              class="form-control" 
+              [(ngModel)]="createForm.code" 
+              name="code"
+              maxlength="4"
+              pattern="[0-9]{4}"
+              required>
+            <small class="text-muted">ต้องเป็นตัวเลข 4 หลัก</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">บทบาท <span class="text-danger">*</span></label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="createForm.role" 
+              name="role"
+              required>
+              <option *ngFor="let role of roles" [value]="role.value">{{ role.label }}</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">ชื่อ-นามสกุล</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              [(ngModel)]="createForm.fullName" 
+              name="fullName">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">อีเมล</label>
+            <input 
+              type="email" 
+              class="form-control" 
+              [(ngModel)]="createForm.email" 
+              name="email">
+          </div>
+          <div class="d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">ยกเลิก</button>
+            <button type="submit" class="btn btn-primary">เพิ่มผู้ใช้</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showCreateModal" *ngIf="showCreateModal" (click)="closeCreateModal()"></div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" [class.show]="showEditModal" [style.display]="showEditModal ? 'block' : 'none'" tabindex="-1" *ngIf="showEditModal && selectedUser">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title">
+          <i class="bi bi-pencil-square me-2"></i>แก้ไขผู้ใช้
+        </h5>
+        <button type="button" class="btn-close" (click)="closeEditModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="onEditSubmit()" #editForm="ngForm">
+          <div class="mb-3">
+            <label class="form-label fw-bold">ชื่อผู้ใช้</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              [(ngModel)]="editForm.username" 
+              name="username">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">รหัสผ่าน (4 หลัก)</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              [(ngModel)]="editForm.code" 
+              name="code"
+              maxlength="4"
+              pattern="[0-9]{4}">
+            <small class="text-muted">เว้นว่างไว้ถ้าไม่ต้องการเปลี่ยน</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">บทบาท</label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="editForm.role" 
+              name="role">
+              <option *ngFor="let role of roles" [value]="role.value">{{ role.label }}</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">ชื่อ-นามสกุล</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              [(ngModel)]="editForm.fullName" 
+              name="fullName">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">อีเมล</label>
+            <input 
+              type="email" 
+              class="form-control" 
+              [(ngModel)]="editForm.email" 
+              name="email">
+          </div>
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input 
+                class="form-check-input" 
+                type="checkbox" 
+                id="isActive"
+                [(ngModel)]="editForm.isActive"
+                name="isActive">
+              <label class="form-check-label" for="isActive">
+                เปิดใช้งาน
+              </label>
+            </div>
+          </div>
+          <div class="d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-secondary" (click)="closeEditModal()">ยกเลิก</button>
+            <button type="submit" class="btn btn-warning">บันทึก</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showEditModal" *ngIf="showEditModal" (click)="closeEditModal()"></div>
+

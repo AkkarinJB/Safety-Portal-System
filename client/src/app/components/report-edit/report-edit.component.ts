@@ -4,7 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SafetyApiService } from '../../services/safety-api.service';
 import { SafetyReport } from '../../models/safety-report';
+import { UpdateReportForm } from '../../models/update-report-form';
 import { AlertService } from '../../services/alert.service';
+import { AuthService } from '../../services/auth.service';
+import { UserRole } from '../../models/user-role';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -16,7 +19,7 @@ import { environment } from '../../../environments/environment';
 })
 export class ReportEditComponent implements OnInit {
   report: SafetyReport | null = null;
-  formData: any = {
+  formData: UpdateReportForm = {
     area: '',
     reportDate: '',
     detail: '',
@@ -36,13 +39,21 @@ export class ReportEditComponent implements OnInit {
   isSubmitting = false;
   fileNameBefore = '';
   fileNameAfter = '';
+  userRole: UserRole | null = null;
+  isInspector = false;
+  isEditor = false;
 
   constructor(
     private route: ActivatedRoute,
     private api: SafetyApiService,
     private router: Router,
-    private alertService: AlertService
-  ) {}
+    private alertService: AlertService,
+    private authService: AuthService
+  ) {
+    this.userRole = this.authService.getUserRole();
+    this.isInspector = this.authService.isInspector();
+    this.isEditor = this.authService.isEditor();
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -53,17 +64,15 @@ export class ReportEditComponent implements OnInit {
     }
   }
 
-  loadReport(id: number) {
+  loadReport(id: number): void {
     this.isLoading = true;
     this.api.getReportById(id).subscribe({
-      next: (data) => {
+      next: (data: SafetyReport) => {
         this.report = data;
         
-        // Handle stop6 - convert string to number if needed
         let stop6Value = 6;
         if (data.stop6) {
           if (typeof data.stop6 === 'string') {
-            // Map Thai string to number
             const stop6Map: { [key: string]: number } = {
               'อันตรายจากเครื่องจักร': 1,
               'อันตรายจากวัตถุหนักตกใส่': 2,
@@ -90,7 +99,6 @@ export class ReportEditComponent implements OnInit {
           status: data.status || 'NotYetDone'
         };
         
-        // Set image previews
         if (data.imageBeforeUrl) {
           this.imageBeforePreview = this.getImageUrl(data.imageBeforeUrl);
         } else {
@@ -105,7 +113,7 @@ export class ReportEditComponent implements OnInit {
         
         this.isLoading = false;
       },
-      error: (err) => {
+      error: (err: unknown) => {
         console.error('Error loading report:', err);
         this.isLoading = false;
         this.alertService.error('ไม่พบข้อมูล', 'ไม่สามารถโหลดข้อมูลรายงานได้');
@@ -113,8 +121,9 @@ export class ReportEditComponent implements OnInit {
     });
   }
 
-  onFileSelected(event: any, type: 'before' | 'after') {
-    const file = event.target.files[0];
+  onFileSelected(event: Event, type: 'before' | 'after'): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         this.alertService.toastError('ไฟล์ภาพต้องไม่เกิน 5MB');
@@ -146,7 +155,7 @@ export class ReportEditComponent implements OnInit {
     }
   }
 
-  removeImage(type: 'before' | 'after') {
+  removeImage(type: 'before' | 'after'): void {
     if (type === 'before') {
       this.selectedFileBefore = null;
       this.imageBeforePreview = this.report?.imageBeforeUrl ? this.getImageUrl(this.report.imageBeforeUrl) : null;
@@ -188,7 +197,7 @@ export class ReportEditComponent implements OnInit {
     return stop6Map[stop6] || 'อื่นๆ';
   }
 
-  onSubmit() {
+  onSubmit(): void {
     if (!this.report) return;
 
     if (!this.formData.area.trim()) {
@@ -212,8 +221,9 @@ export class ReportEditComponent implements OnInit {
         this.alertService.success('อัปเดตงานเรียบร้อย!', 'ข้อมูลถูกบันทึกเรียบร้อยแล้ว');
         this.router.navigate(['/dashboard']);
       },
-      error: (err) => {
-        this.alertService.error('อัปเดตไม่สำเร็จ', err.message);
+      error: (err: unknown) => {
+        const errorMessage = err instanceof Error ? err.message : 'ไม่ทราบสาเหตุ';
+        this.alertService.error('อัปเดตไม่สำเร็จ', errorMessage);
         this.isSubmitting = false;
       }
     });

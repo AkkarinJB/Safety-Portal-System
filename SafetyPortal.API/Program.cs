@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        new MariaDbServerVersion(new Version(10, 11, 6)) // MariaDB 10.11.6 (ตาม server version)
+        new MariaDbServerVersion(new Version(10, 11, 6))
     ));
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -38,6 +38,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Configure API Controllers and Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -72,6 +73,13 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+builder.Services.AddScoped<ISafetyReportRepository, SafetyReportRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<ISafetyReportService, SafetyReportService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddHttpClient<GeminiService>();
 
@@ -108,7 +116,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Enable Swagger in all environments
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -116,7 +123,6 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-// Disable HTTPS redirection on Render (Render handles HTTPS automatically)
 if (!app.Environment.IsProduction())
 {
     app.UseHttpsRedirection();

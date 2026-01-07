@@ -8,5 +8,6 @@ namespace SafetyPortal.API.Data
         {
         }
         public DbSet<SafetyReports> SafetyReports { get; set; }
+        public DbSet<User> Users { get; set; }
     }
 }

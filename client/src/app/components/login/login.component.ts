@@ -29,7 +29,7 @@ export class LoginComponent {
     this.showCode = !this.showCode;
   }
 
-  onCodeChange() {
+  onCodeChange(): void {
     this.code = this.code.replace(/[^0-9]/g, '');
     
     if (this.code.length > 4) {
@@ -46,6 +46,14 @@ export class LoginComponent {
         this.login();
       }, 300);
     }
+  }
+
+  onInputFocus(): void {
+    // Focus handling if needed
+  }
+
+  onInputBlur(): void {
+    // Blur handling if needed
   }
 
   login() {
@@ -70,7 +78,7 @@ export class LoginComponent {
 
     this.auth.login(this.code).subscribe({
       next: () => {
-        this.alert.toastSuccess('ยินดีต้อนรับกลับครับ!');
+        this.alert.toastSuccess('ยินดีต้อนรับ');
         this.router.navigate(['/dashboard']);
       },
       error: () => {

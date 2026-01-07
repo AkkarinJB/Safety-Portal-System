@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { AlertService } from './services/alert.service';
+import { UserRole } from './models/user-role';
 
 @Component({
   selector: 'app-root',
@@ -14,6 +15,11 @@ import { AlertService } from './services/alert.service';
 })
 export class AppComponent implements OnInit, OnDestroy {
   isLoginPage = false;
+  isInspector = false;
+  isEditor = false;
+  isSuperAdmin = false;
+  userRole: UserRole | null = null;
+  username: string | null = null;
   private routerSubscription?: Subscription;
 
   constructor(
@@ -22,29 +28,37 @@ export class AppComponent implements OnInit, OnDestroy {
     private alertService: AlertService
   ) {}
 
-  ngOnInit() {
-    // ตรวจสอบ route เริ่มต้น
+  ngOnInit(): void {
+    this.updateUserInfo();
     this.checkRoute();
 
-    // ตรวจสอบ route เมื่อมีการ navigate
     this.routerSubscription = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe(() => {
         this.checkRoute();
+        this.updateUserInfo();
       });
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
     }
   }
 
-  private checkRoute() {
+  private checkRoute(): void {
     this.isLoginPage = this.router.url === '/login';
   }
 
-  logout() {
+  private updateUserInfo(): void {
+    this.userRole = this.authService.getUserRole();
+    this.username = this.authService.getUsername();
+    this.isInspector = this.authService.isInspector();
+    this.isEditor = this.authService.isEditor();
+    this.isSuperAdmin = this.authService.isSuperAdmin();
+  }
+
+  logout(): void {
     this.alertService.confirm('ออกจากระบบ?', 'คุณต้องการออกจากระบบหรือไม่?')
       .then((isConfirmed) => {
         if (isConfirmed) {
@@ -52,5 +66,12 @@ export class AppComponent implements OnInit, OnDestroy {
           this.alertService.toastSuccess('ออกจากระบบเรียบร้อย');
         }
       });
+  }
+
+  getRoleLabel(): string {
+    if (this.isSuperAdmin) return 'ผู้ดูแลระบบ';
+    if (this.isInspector) return 'ผู้ตรวจสอบ';
+    if (this.isEditor) return 'ผู้แก้ไข';
+    return '';
   }
 }

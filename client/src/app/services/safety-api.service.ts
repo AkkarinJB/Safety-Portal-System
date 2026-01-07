@@ -3,6 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SafetyReport } from '../models/safety-report';
+import { CreateReportForm } from '../models/create-report-form';
+import { UpdateReportForm } from '../models/update-report-form';
+import { 
+  CreateReportResponse, 
+  UpdateReportResponse, 
+  DeleteReportResponse,
+  AiAnalysisResult 
+} from '../models/api-responses';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -14,52 +22,48 @@ export class SafetyApiService {
   constructor(private http: HttpClient) { }
 
   private mapRankEnumToString(reports: SafetyReport[]): SafetyReport[] {
-    const rankMap: { [key: number]: string } = { 0: 'A', 1: 'B', 2: 'C' };
-    const statusMap: { [key: number]: string } = { 
+    const rankMap: Readonly<Record<number, string>> = { 0: 'A', 1: 'B', 2: 'C' };
+    const statusMap: Readonly<Record<number, string>> = { 
       0: 'NotYetDone', 
       1: 'OnProcess', 
       2: 'Done' 
     };
-    return reports.map(r => {
-      // Map rank
-      let rankValue = r.rank;
+    return reports.map((r: SafetyReport): SafetyReport => {
+      let rankValue: string = r.rank as string;
       if (typeof r.rank === 'number') {
-        rankValue = rankMap[r.rank] || String(r.rank);
+        rankValue = rankMap[r.rank] ?? String(r.rank);
       }
       
-      // Map status from enum to string
-      let statusValue = r.status;
+      let statusValue: string = r.status as string;
       if (typeof r.status === 'number') {
-        statusValue = statusMap[r.status] || String(r.status);
+        statusValue = statusMap[r.status] ?? String(r.status);
       } else if (!r.status) {
-        statusValue = 'NotYetDone'; // Default
+        statusValue = 'NotYetDone';
       }
       
       return {
         ...r,
         rank: rankValue,
         status: statusValue,
-        stop6: r.stop6 || 6 
+        stop6: r.stop6 ?? 6 
       };
     });
   }
 
   getAllReports(): Observable<SafetyReport[]> {
     return this.http.get<SafetyReport[]>(`${this.apiUrl}/SafetyReports`).pipe(
-      map(reports => this.mapRankEnumToString(reports))
+      map((reports: SafetyReport[]) => this.mapRankEnumToString(reports))
     );
   }
 
   getReportById(id: number): Observable<SafetyReport> {
     return this.http.get<SafetyReport>(`${this.apiUrl}/SafetyReports/${id}`).pipe(
-      map(report => {
-        // Map rank
+      map((report: SafetyReport) => {
         let rankValue = report.rank;
         if (typeof report.rank === 'number') {
           rankValue = { 0: 'A', 1: 'B', 2: 'C' }[report.rank] || String(report.rank);
         }
         
-        // Map status from enum to string
         const statusMap: { [key: number]: string } = { 
           0: 'NotYetDone', 
           1: 'OnProcess', 
@@ -69,7 +73,7 @@ export class SafetyApiService {
         if (typeof report.status === 'number') {
           statusValue = statusMap[report.status] || String(report.status);
         } else if (!report.status) {
-          statusValue = 'NotYetDone'; // Default
+          statusValue = 'NotYetDone';
         }
         
         // Map stop6
@@ -92,7 +96,7 @@ export class SafetyApiService {
     );
   }
 
-  createReport(data: any, file?: File): Observable<any> {
+  createReport(data: CreateReportForm, file?: File): Observable<CreateReportResponse> {
     const formData = new FormData();
     formData.append('area', data.area);
     formData.append('reportDate', data.reportDate);
@@ -106,11 +110,11 @@ export class SafetyApiService {
     if (file) {
       formData.append('imageBefore', file);
     }
-    return this.http.post(`${this.apiUrl}/SafetyReports`, formData);
+    return this.http.post<CreateReportResponse>(`${this.apiUrl}/SafetyReports`, formData);
   }
 
  
-  updateReport(id: number, data: any, fileBefore?: File, fileAfter?: File): Observable<any> {
+  updateReport(id: number, data: UpdateReportForm, fileBefore?: File, fileAfter?: File): Observable<UpdateReportResponse> {
     const formData = new FormData();
     
     if (data.area) formData.append('area', data.area);
@@ -130,17 +134,17 @@ export class SafetyApiService {
       formData.append('imageAfter', fileAfter);
     }
     
-    return this.http.put(`${this.apiUrl}/SafetyReports/${id}`, formData);
+    return this.http.put<UpdateReportResponse>(`${this.apiUrl}/SafetyReports/${id}`, formData);
   }
 
 
-  analyzeIssue(detail: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/Ai/analyze`, JSON.stringify(detail), {
+  analyzeIssue(detail: string): Observable<AiAnalysisResult> {
+    return this.http.post<AiAnalysisResult>(`${this.apiUrl}/Ai/analyze`, JSON.stringify(detail), {
       headers: { 'Content-Type': 'application/json' }
     });
   }
 
-  deleteReport(id: number): Observable<any> {
-  return this.http.delete(`${this.apiUrl}/SafetyReports/${id}`);
-}
+  deleteReport(id: number): Observable<DeleteReportResponse> {
+    return this.http.delete<DeleteReportResponse>(`${this.apiUrl}/SafetyReports/${id}`);
+  }
 }
